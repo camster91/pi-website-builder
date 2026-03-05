@@ -16,24 +16,28 @@ Write-Host "Repository: $GitRepo"
 
 # Check if application already exists
 Write-Host "🔍 Checking for existing application..." -ForegroundColor Yellow
-$ExistingApps = Invoke-RestMethod -Uri "$API/applications?project_uuid=$ProjectUUID" -Headers $Headers -Method Get
-$ExistingApp = $ExistingApps.data | Where-Object { $_.name -eq $AppName }
-
-if ($ExistingApp) {
-    Write-Host "⚠️  Application already exists with UUID: $($ExistingApp.uuid)" -ForegroundColor Yellow
-    Write-Host "🔄 Triggering redeploy..." -ForegroundColor Yellow
+try {
+    $ExistingApps = Invoke-RestMethod -Uri "$API/applications?project_uuid=$ProjectUUID" -Headers $Headers -Method Get
+    $ExistingApp = $ExistingApps.data | Where-Object { $_.name -eq $AppName }
     
-    # Trigger deploy
-    $DeployResponse = Invoke-RestMethod -Uri "$API/applications/$($ExistingApp.uuid)/start" -Headers $Headers -Method Post
-    Write-Host "✅ Deploy triggered: $($DeployResponse | ConvertTo-Json -Compress)" -ForegroundColor Green
-    
-    # Get application details
-    $AppDetails = Invoke-RestMethod -Uri "$API/applications/$($ExistingApp.uuid)" -Headers $Headers -Method Get
-    if ($AppDetails.data.fqdn) {
-        Write-Host "🌐 Application URL: https://$($AppDetails.data.fqdn)" -ForegroundColor Green
+    if ($ExistingApp) {
+        Write-Host "⚠️  Application already exists with UUID: $($ExistingApp.uuid)" -ForegroundColor Yellow
+        Write-Host "🔄 Triggering redeploy..." -ForegroundColor Yellow
+        
+        # Trigger deploy
+        $DeployResponse = Invoke-RestMethod -Uri "$API/applications/$($ExistingApp.uuid)/start" -Headers $Headers -Method Post
+        Write-Host "✅ Deploy triggered successfully" -ForegroundColor Green
+        
+        # Get application details
+        $AppDetails = Invoke-RestMethod -Uri "$API/applications/$($ExistingApp.uuid)" -Headers $Headers -Method Get
+        if ($AppDetails.data.fqdn) {
+            Write-Host "🌐 Application URL: https://$($AppDetails.data.fqdn)" -ForegroundColor Green
+        }
+        
+        exit 0
     }
-    
-    exit 0
+} catch {
+    Write-Host "⚠️  Could not check existing applications: $($_.Exception.Message)" -ForegroundColor Yellow
 }
 
 Write-Host "🆕 Creating new application..." -ForegroundColor Cyan
@@ -50,12 +54,12 @@ $Payload = @{
     name = $AppName
     docker_compose_file = "docker-compose.yml"
     docker_compose_service = "app"
-} | ConvertTo-Json
+}
 
 try {
-    $Response = Invoke-RestMethod -Uri "$API/applications/public" -Headers $Headers -Method Post -Body $Payload
+    $Response = Invoke-RestMethod -Uri "$API/applications/public" -Headers $Headers -Method Post -Body ($Payload | ConvertTo-Json)
     $AppUUID = $Response.data.uuid
-    Write-Host "✅ Application created with UUID: $AppUUID" -ForegroundColor Green
+    Write-Host "✅ Application created with UUID: $AppUUID (docker-compose)" -ForegroundColor Green
 } catch {
     Write-Host "⚠️  Docker-compose failed, trying dockerfile..." -ForegroundColor Yellow
     
@@ -69,18 +73,23 @@ try {
         build_pack = "dockerfile"
         ports_exposes = "3000"
         name = $AppName
-    } | ConvertTo-Json
-    
-    $Response = Invoke-RestMethod -Uri "$API/applications/public" -Headers $Headers -Method Post -Body $Payload
-    $AppUUID = $Response.data.uuid
-    
-    if (-not $AppUUID) {
-        Write-Host "❌ Failed to create application" -ForegroundColor Red
-        Write-Host "Response: $($Response | ConvertTo-Json)" -ForegroundColor Red
-        exit 1
     }
     
-    Write-Host "✅ Application created with UUID: $AppUUID" -ForegroundColor Green
+    try {
+        $Response = Invoke-RestMethod -Uri "$API/applications/public" -Headers $Headers -Method Post -Body ($Payload | ConvertTo-Json)
+        $AppUUID = $Response.data.uuid
+        
+        if (-not $AppUUID) {
+            Write-Host "❌ Failed to create application" -ForegroundColor Red
+            Write-Host "Response: $($Response | ConvertTo-Json)" -ForegroundColor Red
+            exit 1
+        }
+        
+        Write-Host "✅ Application created with UUID: $AppUUID (dockerfile)" -ForegroundColor Green
+    } catch {
+        Write-Host "❌ Failed to create application: $($_.Exception.Message)" -ForegroundColor Red
+        exit 1
+    }
 }
 
 # Set environment variables note
@@ -97,16 +106,20 @@ Write-Host "- BASE_DOMAIN" -ForegroundColor Yellow
 
 # Trigger first deploy
 Write-Host "🚀 Triggering initial deployment..." -ForegroundColor Cyan
-$DeployResponse = Invoke-RestMethod -Uri "$API/applications/$AppUUID/start" -Headers $Headers -Method Post
-Write-Host "✅ Deploy triggered: $($DeployResponse | ConvertTo-Json -Compress)" -ForegroundColor Green
-
-# Wait a moment and get application details
-Start-Sleep -Seconds 5
-$AppDetails = Invoke-RestMethod -Uri "$API/applications/$AppUUID" -Headers $Headers -Method Get
-if ($AppDetails.data.fqdn) {
-    Write-Host "🌐 Application URL: https://$($AppDetails.data.fqdn)" -ForegroundColor Green
-} else {
-    Write-Host "ℹ️  Application URL will be available after build completes" -ForegroundColor Yellow
+try {
+    $DeployResponse = Invoke-RestMethod -Uri "$API/applications/$AppUUID/start" -Headers $Headers -Method Post
+    Write-Host "✅ Deploy triggered successfully" -ForegroundColor Green
+    
+    # Wait a moment and get application details
+    Start-Sleep -Seconds 5
+    $AppDetails = Invoke-RestMethod -Uri "$API/applications/$AppUUID" -Headers $Headers -Method Get
+    if ($AppDetails.data.fqdn) {
+        Write-Host "🌐 Application URL: https://$($AppDetails.data.fqdn)" -ForegroundColor Green
+    } else {
+        Write-Host "ℹ️  Application URL will be available after build completes" -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "⚠️  Could not trigger deploy: $($_.Exception.Message)" -ForegroundColor Yellow
 }
 
 Write-Host "`n🎉 Deployment initiated!" -ForegroundColor Green
