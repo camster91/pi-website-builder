@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "migrate": "node scripts/migrate.js",
+    "postinstall": "prisma generate",
+    "docker:build": "docker build -t pi-website-builder .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env.production pi-website-builder"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

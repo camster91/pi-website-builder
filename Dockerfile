@@ -39,8 +39,12 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/middleware.ts ./
 
+# Copy scripts
+COPY --from=builder /app/scripts ./scripts
+
 # Set permissions
 RUN chown -R nextjs:nodejs /app
+RUN chmod +x /app/scripts/start.sh
 
 USER nextjs
 
@@ -49,4 +53,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["npm", "start"]
+CMD ["/app/scripts/start.sh"]
