@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  image         String?
+  credits       Int      @default(0)
+  subscription  Subscription?
+  projects      Project[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  accounts      Account[]
+  sessions      Session[]
+  tokenTransactions TokenTransaction[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  stripeCustomerId String? @unique
+  stripeSubscriptionId String? @unique
+  status        SubscriptionStatus @default(INACTIVE)
+  plan          PlanType @default(STARTER)
+  creditsPerMonth Int    @default(1000)
+  currentPeriodEnd DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(DRAFT)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  files       File[]
+  subdomain   String?  @unique
+  containerId String?
+  liveUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  pins        Pin[]
+}
+
+model File {
+  id        String   @id @default(cuid())
+  name      String
+  path      String   // "index.html", "css/styles.css"
+  content   String
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@unique([projectId, path])
+}
+
+model Pin {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  xPath       String   // XPath of the element
+  comment     String
+  status      PinStatus @default(PENDING)
+  response    String?   // AI response to the comment
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TokenTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Int      // Positive for purchases, negative for usage
+  type      TransactionType
+  metadata  Json?    // { geminiTokens: 1500, prompt: "...", projectId: "..." }
+  createdAt DateTime @default(now())
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELED
+  PAST_DUE
+}
+
+enum PlanType {
+  STARTER
+  PRO
+  AGENCY
+}
+
+enum ProjectStatus {
+  DRAFT
+  GENERATING
+  LIVE
+  ARCHIVED
+}
+
+enum PinStatus {
+  PENDING
+  RESOLVED
+  IGNORED
+}
+
+enum TransactionType {
+  PURCHASE
+  WEBSITE_GENERATION
+  EDIT
+  REFUND
+  BONUS
+}

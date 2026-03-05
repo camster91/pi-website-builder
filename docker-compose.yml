@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/pi_website_builder
+      - REDIS_URL=redis://redis:6379
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - DOCKER_ORCHESTRATOR_URL=http://docker-orchestrator:3001
+    depends_on:
+      - postgres
+      - redis
+      - docker-orchestrator
+    restart: unless-stopped
+    networks:
+      - pi-network
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=pi_website_builder
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - pi-network
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - pi-network
+
+  docker-orchestrator:
+    build:
+      context: ./services/docker-orchestrator
+    ports:
+      - "3001:3001"
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - BASE_PATH=/var/www/pi-website-builder/sites
+      - BASE_DOMAIN=${BASE_DOMAIN:-pi-website.dev}
+      - TRAEFIK_NETWORK=${TRAEFIK_NETWORK:-traefik}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - website_data:/var/www/pi-website-builder/sites
+    restart: unless-stopped
+    networks:
+      - pi-network
+      - traefik-public
+
+volumes:
+  postgres_data:
+  redis_data:
+  website_data:
+
+networks:
+  pi-network:
+    driver: bridge
+  traefik-public:
+    external: true

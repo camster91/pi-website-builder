@@ -1,0 +1,17 @@
+{
+  "name": "docker-orchestrator",
+  "version": "1.0.0",
+  "description": "Docker orchestration service for Pi Website Builder",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "dockerode": "^4.0.9",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
