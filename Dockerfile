@@ -9,8 +9,8 @@ COPY prisma ./prisma/
 # Install all deps (including devDependencies) without running postinstall scripts
 RUN NODE_ENV=development npm ci --ignore-scripts
 
-# Generate Prisma client explicitly (after schema is copied)
-RUN npx prisma generate
+# Strip Windows CRLF line endings from schema, then generate client
+RUN sed -i 's/\r//' prisma/schema.prisma && npx prisma generate
 
 COPY . .
 
