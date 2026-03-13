@@ -61,8 +61,8 @@ model Subscription {
   userId               String             @unique
   stripeCustomerId     String?            @unique
   stripeSubscriptionId String?            @unique
-  status               SubscriptionStatus @default("INACTIVE")
-  plan                 PlanType           @default("STARTER")
+  status               SubscriptionStatus @default(INACTIVE)
+  plan                 PlanType           @default(STARTER)
   creditsPerMonth      Int                @default(1000)
   currentPeriodEnd     DateTime?
   createdAt            DateTime           @default(now())
@@ -75,7 +75,7 @@ model Project {
   name           String
   description    String?
   prompt         String?
-  status         ProjectStatus @default("DRAFT")
+  status         ProjectStatus @default(DRAFT)
   userId         String
   subdomain      String?       @unique
   containerId    String?
@@ -111,7 +111,7 @@ model Pin {
   xPercent  Float     @default(0)
   yPercent  Float     @default(0)
   comment   String
-  status    PinStatus @default("PENDING")
+  status    PinStatus @default(PENDING)
   response  String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
