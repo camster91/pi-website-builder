@@ -6,9 +6,10 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Force dev mode so devDependencies are installed (build tools: typescript, etc.)
-RUN NODE_ENV=development npm ci --include=dev
+# Install all deps (including devDependencies) without running postinstall scripts
+RUN NODE_ENV=development npm ci --ignore-scripts
 
+# Generate Prisma client explicitly (after schema is copied)
 RUN npx prisma generate
 
 COPY . .
