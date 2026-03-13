@@ -6,7 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-RUN npm ci
+# Force dev mode so devDependencies are installed (build tools: typescript, etc.)
+RUN NODE_ENV=development npm ci --include=dev
 
 RUN npx prisma generate
 
