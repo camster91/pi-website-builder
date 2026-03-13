@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -123,7 +123,7 @@ model TokenTransaction {
   userId    String
   amount    Int
   type      TransactionType
-  metadata  String?
+  metadata  Json?
   createdAt DateTime        @default(now())
   user      User            @relation(fields: [userId], references: [id])
 }

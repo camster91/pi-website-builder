@@ -145,10 +145,6 @@ export default async function BillingPage({
           <div className="space-y-3">
             {user.tokenTransactions.length > 0 ? (
               user.tokenTransactions.map((tx) => {
-                let metadata: any = {}
-                try {
-                  metadata = tx.metadata ? JSON.parse(tx.metadata) : {}
-                } catch {}
                 return (
                   <div
                     key={tx.id}

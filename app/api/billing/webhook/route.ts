@@ -40,10 +40,10 @@ export async function POST(req: NextRequest) {
             userId,
             amount: creditAmount,
             type: 'PURCHASE',
-            metadata: JSON.stringify({
+            metadata: {
               stripeSessionId: session.id,
               amountPaid: session.amount_total,
-            }),
+            },
           },
         })
 

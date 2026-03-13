@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
           userId: user.id,
           amount: -CREDIT_COST,
           type: 'WEBSITE_GENERATION',
-          metadata: JSON.stringify({ prompt: prompt.substring(0, 200), projectId: project.id }),
+          metadata: { prompt: prompt.substring(0, 200), projectId: project.id },
         },
       })
 

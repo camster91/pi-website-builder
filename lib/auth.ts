@@ -37,7 +37,7 @@ export const authOptions: NextAuthOptions = {
           userId: user.id,
           amount: 100,
           type: 'BONUS',
-          metadata: JSON.stringify({ reason: 'New user welcome credits' }),
+          metadata: { reason: 'New user welcome credits' },
         },
       })
     },
