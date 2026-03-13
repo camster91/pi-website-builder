@@ -45,3 +45,5 @@ services/docker-orchestrator/node_modules
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+dev-server.log
+dev.pid

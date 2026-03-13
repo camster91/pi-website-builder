@@ -1,176 +1,173 @@
-# 🚀 Pi AI Website Builder SaaS
+# 🎨 Pi Website Builder
 
-A multi-tenant AI-powered website builder that generates complete, production-ready websites from natural language prompts using the Gemini API.
+A modular website builder with intuitive drag-and-drop functionality and a powerful theme editor. Build beautiful, responsive websites without writing code.
 
-## Features Implemented
+## ✨ Features
 
-### ✅ Phase 1: Core Infrastructure
-- **Next.js 16** (App Router) with TypeScript and Tailwind CSS
-- **Authentication** with NextAuth.js (Google OAuth) and Prisma adapter
-- **Database** schema with SQLite (PostgreSQL ready)
-- **User models**: User, Account, Session, Subscription, Project, File, Pin, TokenTransaction
-- **State management** with Zustand (ready for complex UI state)
-- **Stripe integration** setup for billing and credit management
+- **Drag-and-Drop Interface**: Intuitive visual editor for building pages with pre-designed components
+- **Theme Editor**: Customize colors, typography, spacing, and styling with a live preview
+- **Component Library**: Rich collection of pre-built, customizable components (headers, footers, forms, galleries, etc.)
+- **Responsive Design**: All components are mobile-first and fully responsive
+- **Export Functionality**: Export your complete website as clean HTML/CSS/JS
+- **Template System**: Start with professional templates or build from scratch
+- **Real-Time Preview**: See changes instantly as you build
+- **Asset Management**: Upload and manage images, fonts, and other assets
+- **Modular Architecture**: Component-based system for easy extensibility
 
-### ✅ Phase 2: Multi-Agent AI Pipeline
-- **Gemini AI integration** with Google Generative AI SDK
-- **Three-agent architecture**:
-  1. **Planner** (Gemini Pro): Creates detailed JSON website plans
-  2. **Coder** (Gemini Flash): Generates HTML/CSS/JavaScript code
-  3. **QA & Marketer** (Gemini Pro): Reviews code and optimizes content
-- **Token tracking** and credit management system
-
-### ✅ Phase 3: Core Features
-- **Interactive dashboard** with project management
-- **Website creation** with prompt-based generation
-- **Credit system** with transaction history
-- **Project preview** and file management
-- **Responsive UI** with modern design
-
-### 🚧 Remaining Implementation
-
-#### Phase 4: Infrastructure & Security
-- [ ] Docker container orchestration for user websites
-- [ ] Traefik reverse proxy configuration
-- [ ] Nginx Alpine container templates
-- [ ] Volume mounting for user files
-- [ ] Automatic SSL with Let's Encrypt
-
-#### Phase 5: Advanced Features
-- [ ] Interactive pin-based editing UI
-- [ ] Real-time preview with iframe communication
-- [ ] ZIP export functionality
-- [ ] Custom domain support
-- [ ] Team collaboration features
-- [ ] Template library
-
-#### Phase 6: Deployment
-- [ ] VPS setup scripts
-- [ ] Docker Compose for production
-- [ ] Environment variable management
-- [ ] Monitoring and logging
-- [ ] Backup and recovery
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 20+
+
+- Node.js 18+
 - npm or yarn
-- Google OAuth credentials (for authentication)
-- Gemini API key (for AI generation)
-- Stripe account (for billing)
 
 ### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd pi-website-builder
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/camster91/pi-website-builder.git
+cd pi-website-builder
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+# Install dependencies
+npm install
 
-3. Set up environment variables:
-   ```bash
-   cp .env.example .env.local
-   # Edit .env.local with your credentials
-   ```
+# Start the development server
+npm run dev
+```
 
-4. Set up the database:
-   ```bash
-   npx prisma db push
-   ```
+### Usage
 
-5. Run the development server:
-   ```bash
-   npm run dev
-   ```
+```bash
+# Development server (http://localhost:5173)
+npm run dev
 
-6. Open http://localhost:3000 in your browser.
+# Build for production
+npm run build
 
-### Project Structure
+# Preview production build
+npm run preview
+
+# Run tests
+npm test
+
+# Lint code
+npm run lint
+```
+
+## 🛠️ Tech Stack
+
+- **Framework**: [React 18](https://react.dev/)
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Styling**: CSS Modules + Modern CSS
+- **Drag & Drop**: React DnD / dnd-kit
+- **State Management**: React Context + Hooks
+- **Component Library**: Custom modular components
+- **Type Safety**: PropTypes / TypeScript (optional)
+
+## 📁 Project Structure
 
 ```
 pi-website-builder/
-├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   ├── auth/              # Authentication pages
-│   ├── dashboard/         # Dashboard pages
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Landing page
-├── components/            # React components
-├── lib/                   # Shared utilities
-│   ├── auth.ts           # NextAuth configuration
-│   ├── gemini.ts         # Gemini AI integration
-│   ├── prisma.ts         # Database client
-│   └── stripe.ts         # Stripe integration
-├── prisma/                # Database schema
-├── services/              # Microservices (planned)
-└── public/                # Static assets
+├── src/
+│   ├── components/          # Reusable UI components
+│   │   ├── Builder/        # Drag-and-drop builder components
+│   │   ├── ThemeEditor/    # Theme customization interface
+│   │   ├── ComponentLibrary/ # Pre-built website components
+│   │   └── Preview/        # Live preview renderer
+│   ├── hooks/              # Custom React hooks
+│   ├── contexts/           # React contexts (theme, builder state)
+│   ├── utils/              # Utility functions
+│   ├── templates/          # Pre-built website templates
+│   ├── assets/             # Static assets (images, fonts)
+│   ├── App.jsx             # Main application component
+│   └── main.jsx            # Application entry point
+├── public/                  # Public static files
+├── dist/                    # Production build output
+└── package.json
 ```
 
-## API Endpoints
+## 🎨 Component Categories
 
-- `POST /api/generate` - Generate a website from a prompt
-- `GET /api/auth/[...nextauth]` - Authentication routes
-- `GET /api/billing/*` - Billing and subscription management
+- **Layout**: Grid, Flex containers, Sections
+- **Navigation**: Headers, Navbars, Footers, Sidebars
+- **Content**: Text blocks, Images, Videos, Galleries
+- **Forms**: Contact forms, Subscribe forms, Input fields
+- **Interactive**: Accordions, Tabs, Modals, Carousels
+- **Marketing**: Hero sections, Feature grids, Testimonials, CTAs
+- **Media**: Image galleries, Video players, Audio embeds
 
-## AI Pipeline Workflow
+## ⚙️ Configuration
 
-1. **User submits prompt** through the dashboard
-2. **Credit check** validates user has sufficient credits
-3. **Planner agent** analyzes prompt and creates detailed JSON plan
-4. **Coder agent** generates HTML/CSS/JavaScript based on plan
-5. **QA agent** reviews code, improves accessibility and SEO
-6. **Files are saved** to database and project is created
-7. **Credits are deducted** from user's balance
-8. **Project is returned** to user for editing and deployment
+### Theme Configuration
 
-## Database Schema
+Create custom themes in `src/themes/`:
 
-Key models:
-- **User**: User accounts with credit balances
-- **Project**: Generated websites with status and metadata
-- **File**: HTML/CSS/JS files for each project
-- **Pin**: User comments on specific website elements
-- **TokenTransaction**: Credit purchases and usage history
-- **Subscription**: Recurring subscription plans
+```json
+{
+  "name": "Modern Blue",
+  "colors": {
+    "primary": "#3b82f6",
+    "secondary": "#8b5cf6",
+    "accent": "#10b981",
+    "background": "#ffffff",
+    "text": "#1f2937"
+  },
+  "typography": {
+    "fontFamily": "Inter, sans-serif",
+    "headingFont": "Poppins, sans-serif",
+    "baseSize": "16px",
+    "scale": 1.25
+  },
+  "spacing": {
+    "unit": "8px",
+    "containerWidth": "1200px"
+  },
+  "borderRadius": "8px"
+}
+```
 
-## Development Roadmap
+### Vite Configuration
 
-### Week 1-2: MVP Completion
-- [ ] Docker orchestration for user websites
-- [ ] Basic website preview functionality
-- [ ] ZIP export feature
-- [ ] Pin-based commenting system
+Customize build settings in `vite.config.js`:
 
-### Week 3-4: Advanced Features
-- [ ] Custom domain support
-- [ ] Template library
-- [ ] Team collaboration
-- [ ] Analytics dashboard
+```javascript
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-### Week 5-6: Scalability & Polish
-- [ ] Performance optimization
-- [ ] Advanced caching
-- [ ] Internationalization
-- [ ] Documentation
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    open: true
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true
+  }
+})
+```
 
-## Contributing
+## 🎯 Roadmap
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
-5. Submit a pull request
+- [ ] Advanced animation system
+- [ ] Custom component creator
+- [ ] Multi-page website support
+- [ ] Collaboration features
+- [ ] Version control for designs
+- [ ] Advanced responsive breakpoint editor
+- [ ] SEO optimization tools
+- [ ] Integration with headless CMS
+- [ ] E-commerce components
+- [ ] Form builder with validation
 
-## License
+## 🤝 Contributing
 
-Proprietary - All rights reserved.
+This is a private project. For collaboration inquiries, please contact the project owner.
+
+## 📄 License
+
+Private. All rights reserved.
 
 ---
 
-**Built with**: Next.js, React, TypeScript, Tailwind CSS, Prisma, PostgreSQL, Docker, Gemini AI, Stripe
+**Build stunning websites with the power of drag-and-drop simplicity**

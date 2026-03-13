@@ -54,7 +54,7 @@ export default async function DashboardPage() {
             </div>
           </div>
           <Link
-            href="/dashboard/credits"
+            href="/dashboard/billing"
             className="mt-4 inline-block text-blue-600 hover:text-blue-800 text-sm font-medium"
           >
             Buy more credits →
@@ -170,7 +170,7 @@ export default async function DashboardPage() {
                     Created {new Date(project.createdAt).toLocaleDateString()}
                   </span>
                   <Link
-                    href={`/dashboard/editor/${project.id}`}
+                    href={`/dashboard/projects/${project.id}`}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
                     Open →

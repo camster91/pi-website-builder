@@ -1,13 +1,13 @@
 #!/bin/sh
+set -e
 
-# Run database migrations
-echo "🚀 Running database migrations..."
-npx prisma migrate deploy
+# Ensure the data directory exists for SQLite
+mkdir -p /data
 
-# Generate Prisma Client if needed
-echo "📦 Generating Prisma Client..."
-npx prisma generate
+# Push schema to database (safe for SQLite, idempotent)
+echo "🗄️  Syncing database schema..."
+npx prisma db push --skip-generate
 
 # Start the application
 echo "🚀 Starting Pi Website Builder..."
-exec npm start
+exec node_modules/.bin/next start
