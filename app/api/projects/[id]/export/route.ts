@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const zip = new JSZip()
   for (const file of files) zip.file(file.path, file.content)
 
-  const content = await zip.generateAsync({ type: 'nodebuffer' })
+  const content = await zip.generateAsync({ type: 'uint8array' })
   return new NextResponse(content, {
     headers: {
       'Content-Type': 'application/zip',
