@@ -9,36 +9,27 @@ const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
 })
 
-// PATCH /api/projects/[id] — update status or name
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json()
-  const data = updateSchema.parse(body)
-
-  const project = await prisma.project.findFirst({
-    where: { id: params.id, userId: session.user.id },
-  })
+  const { id } = await params
+  const project = await prisma.project.findFirst({ where: { id, userId: session.user.id } })
   if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const updated = await prisma.project.update({
-    where: { id: params.id },
-    data,
-  })
+  const data = updateSchema.parse(await req.json())
+  const updated = await prisma.project.update({ where: { id }, data })
   return NextResponse.json(updated)
 }
 
-// DELETE /api/projects/[id] — delete project and all files
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const project = await prisma.project.findFirst({
-    where: { id: params.id, userId: session.user.id },
-  })
+  const { id } = await params
+  const project = await prisma.project.findFirst({ where: { id, userId: session.user.id } })
   if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  await prisma.project.delete({ where: { id: params.id } })
+  await prisma.project.delete({ where: { id } })
   return NextResponse.json({ success: true })
 }
