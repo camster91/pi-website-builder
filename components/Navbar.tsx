@@ -115,12 +115,14 @@ export default function Navbar() {
               </div>
             </>
           ) : (
-            <button
-              onClick={() => signIn('google')}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
-            >
-              Sign In with Google
-            </button>
+            <div className="flex items-center gap-3">
+              <Link href="/auth/signin" className="text-sm text-gray-600 hover:text-gray-900 transition font-medium">
+                Sign In
+              </Link>
+              <Link href="/auth/signup" className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
+                Sign Up
+              </Link>
+            </div>
           )}
 
           {/* Mobile menu button */}

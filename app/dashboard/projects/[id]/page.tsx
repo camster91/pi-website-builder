@@ -16,8 +16,19 @@ import {
 import Link from 'next/link'
 import ProjectClient from './ProjectClient'
 
+import type { Metadata } from 'next'
+
 interface PageProps {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+  const project = await prisma.project.findUnique({ where: { id }, select: { name: true, description: true } })
+  return {
+    title: project ? `${project.name} — Pi Website Builder` : 'Project',
+    description: project?.description ?? 'AI-generated website',
+  }
 }
 
 export default async function ProjectPage({ params }: PageProps) {
