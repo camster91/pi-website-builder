@@ -1,15 +1,21 @@
-import { Ratelimit } from '@upstash/ratelimit'
-import { Redis } from '@upstash/redis'
+// Simple in-memory rate limiter (5 requests per 60 seconds per user)
+// For production scale, swap this for @upstash/ratelimit with Redis
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || '',
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
-})
+const requests = new Map<string, number[]>()
 
-// Limit: 5 requests per minute
-const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, '60 s'),
-})
+export const ratelimit = {
+  async limit(identifier: string): Promise<{ success: boolean }> {
+    const now = Date.now()
+    const windowMs = 60_000
+    const maxRequests = 5
 
-export { ratelimit }
+    const timestamps = (requests.get(identifier) || []).filter(t => now - t < windowMs)
+    if (timestamps.length >= maxRequests) {
+      return { success: false }
+    }
+
+    timestamps.push(now)
+    requests.set(identifier, timestamps)
+    return { success: true }
+  }
+}
