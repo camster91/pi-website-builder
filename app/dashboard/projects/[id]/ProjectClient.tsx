@@ -21,12 +21,21 @@ interface PinData {
 interface ProjectClientProps {
   projectId: string
   projectName: string
+  hasFiles: boolean
+  liveUrl: string | null
+  subdomain: string | null
+  status: string
   files: File[]
   initialPins: PinData[]
 }
 
 export default function ProjectClient({
   projectId,
+  projectName,
+  hasFiles,
+  liveUrl,
+  subdomain,
+  status,
   files,
   initialPins,
 }: ProjectClientProps) {
