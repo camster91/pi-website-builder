@@ -63,8 +63,11 @@ class GeminiService {
     }
   }
 
-  async generatePlan(prompt: string): Promise<any> {
-    const systemPrompt = `You are a senior brand strategist and UX architect. Analyze the user's website request and return a comprehensive JSON plan.
+  async humanizeContent(content: any, tone: string): Promise<any> {
+    const prompt = `You are an expert copywriter. Rewrite this content to be more ${tone} and natural, human-written tone. Maintain the structure: ${JSON.stringify(content)}`;
+    const result = await this.generate('qa', prompt);
+    return extractJSON(result.text);
+  }
 
 INDUSTRY DETECTION: Detect which category this falls into:
 local-service | restaurant | portfolio | saas | ecommerce | agency | nonprofit | healthcare | real-estate | education | fitness | beauty
@@ -869,6 +872,10 @@ Output ONLY the section HTML, starting with <style>/* ${sectionType} */`
     const fontBody = typo.fontBody || p.fontBody || 'Inter'
     const hw = typo.headingWeight || '700'
     const ls = typo.letterSpacing || '-0.02em'
+    
+    // Idea 2: Adaptive Density
+    const density = p.density || 'spacious'
+    const spacingVar = density === 'spacious' ? 'clamp(4rem, 8vw, 7rem)' : 'clamp(2rem, 4vw, 3.5rem)'
 
     const sectionsHtml = sections.map((s) => s.html).join('\n\n')
 
@@ -1231,6 +1238,13 @@ ${sectionsHtml}
 
 })();
 </script>
+  <script>
+    document.querySelectorAll('.feat-card, .testi-card').forEach(el => {
+      if (Math.random() > 0.8) {
+        el.style.transform = \`rotate(\${Math.random() * 2 - 1}deg)\`;
+      }
+    });
+  </script>
 </body>
 </html>`
   }

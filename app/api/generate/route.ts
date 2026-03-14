@@ -83,8 +83,15 @@ export async function POST(req: NextRequest) {
       send({ status: 'Planning website structure...', projectId: project.id })
       const plan = await withRetry(() => gemini.generatePlan(prompt))
 
+      // Craftsmanship: Humanize content for tone
+      plan.content = await gemini.humanizeContent(plan.content, plan.tone || 'professional')
+
       const industry = plan.industry || 'local-service'
       const styleName = plan.style || 'modern'
+      
+      // Craftsmanship: Determine narrative archetype and density
+      const density = ['portfolio', 'agency', 'beauty', 'restaurant'].includes(industry) ? 'spacious' : 'tight'
+      const archetype = styleName.includes('creative') || styleName.includes('editorial') ? 'hero-journey' : 'authority'
 
       // ── Step 2: Start AI image generation in background ──
       send({ status: 'Generating custom visuals...', detail: 'AI images + typography' })
@@ -156,6 +163,7 @@ export async function POST(req: NextRequest) {
         fontHeading: fontPair.heading,
         fontBody: fontPair.body,
         radius: style.tokens.shape.borderRadius,
+        density: density,
         // Use AI image if available, otherwise Unsplash
         heroImage: aiImages?.get('hero')
           ? getImageUrl(aiImages.get('hero')!)
@@ -164,6 +172,7 @@ export async function POST(req: NextRequest) {
           ? getImageUrl(aiImages.get('about')!)
           : fallbackImages.about[0],
         serviceImages: fallbackImages.services,
+        density: density,
       }
 
       // Inject images into plan for AI section generation
@@ -178,7 +187,7 @@ export async function POST(req: NextRequest) {
       // Smart section order: use plan's sections OR build from industry
       const sectionOrder = plan.sections && plan.sections.length > 0
         ? plan.sections.map((s: any) => s.type || s.id)
-        : buildSectionOrder(industry)
+        : buildSectionOrder(industry, archetype)
 
       const generatedSections: Array<{ type: string; html: string; css?: string }> = []
       let previousHtml = ''

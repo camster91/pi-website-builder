@@ -28,7 +28,7 @@ export interface FilledContent {
 export interface ComponentVariant {
   id: string
   name: string
-  section: 'nav' | 'hero' | 'social-proof' | 'features' | 'about' | 'testimonials' | 'pricing' | 'cta' | 'contact' | 'footer' | 'faq'
+  section: 'nav' | 'hero' | 'social-proof' | 'features' | 'about' | 'testimonials' | 'pricing' | 'cta' | 'contact' | 'footer' | 'faq' | 'process' | 'stats' | 'services' | 'gallery' | 'video' | 'blog' | 'comparison' | 'portfolio'
   description: string
 
   /** Pre-built CSS for this component (scoped via unique class prefix) */
@@ -52,7 +52,7 @@ export interface ComponentVariant {
 }
 
 /**
- * Design tokens passed to every component for color/font injection.
+ * Design tokens passed to every component for color/font/style injection.
  */
 export interface DesignTokens {
   primary: string
@@ -68,6 +68,7 @@ export interface DesignTokens {
   fontHeading: string
   fontBody: string
   radius: string
+  density: 'spacious' | 'tight' // Added
   heroImage?: string
   aboutImage?: string
   serviceImages?: string[]
@@ -100,6 +101,7 @@ export function fillTemplate(
     '{{FONT_HEADING}}': tokens.fontHeading,
     '{{FONT_BODY}}': tokens.fontBody,
     '{{RADIUS}}': tokens.radius,
+    '{{SPACING_VAR}}': tokens.density === 'spacious' ? 'clamp(4rem, 8vw, 7rem)' : 'clamp(2rem, 4vw, 3.5rem)',
     '{{HERO_IMAGE}}': tokens.heroImage || '',
     '{{ABOUT_IMAGE}}': tokens.aboutImage || '',
   }

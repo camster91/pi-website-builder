@@ -79,11 +79,69 @@ import { portfolioProjectGrid } from './portfolio/project-grid'
 
 // ── NEW Section Types ─────────────────────────────────────────────────────────
 import { statsNumbersShowcase } from './stats/numbers-showcase'
+import { statsMetricCards } from './stats/metric-cards'
 import { servicesCardsGrid } from './services/cards-grid'
+import { servicesListStyle } from './services/list-style'
+import { servicesDarkCards } from './services/dark-cards'
+import { servicesAccordion } from './services/accordion-services'
+import { servicesMiniIcons } from './services/mini-icons'
+import { servicesTierPackages } from './services/tier-packages'
+import { servicesProcessServices } from './services/process-services'
+import { servicesIconRow } from './services/icon-row'
+import { servicesFeaturedService } from './services/featured-service'
+import { servicesPricingList } from './services/pricing-list'
+
 import { galleryPhotoMasonry } from './gallery/photo-masonry'
+import { galleryUniformGrid } from './gallery/uniform-grid'
+import { galleryFeaturedLarge } from './gallery/featured-large'
+import { galleryHorizontalScroll } from './gallery/horizontal-scroll'
+import { galleryDarkShowcase } from './gallery/dark-showcase'
+import { galleryBeforeAfter } from './gallery/before-after'
+import { galleryCarousel } from './gallery/carousel'
+import { galleryVideoTiles } from './gallery/video-tiles'
+import { galleryFilterCategory } from './gallery/filter-category'
+import { galleryPolaroidStack } from './gallery/polaroid-stack'
+import { galleryFullBleed } from './gallery/full-bleed'
+
 import { videoFeatureShowcase } from './video/feature-showcase'
 import { blogArticlePreview } from './blog/article-preview'
+import { blogFeaturedPost } from './blog/featured-post'
+import { blogListView } from './blog/list-view'
+import { blogDark } from './blog/dark-blog'
+import { blogNewsletterBlog } from './blog/newsletter-blog'
+import { blogMinimal } from './blog/minimal-blog'
+import { blogMagazineLayout } from './blog/magazine-layout'
+
 import { comparisonFeatureTable } from './comparison/feature-table'
+import { comparisonDarkTable } from './comparison/dark-table'
+import { comparisonSplitSide } from './comparison/split-side'
+import { comparisonMatrixGrid } from './comparison/matrix-grid'
+import { comparisonCheckList } from './comparison/check-list'
+import { comparisonCompetitorLogos } from './comparison/competitor-logos'
+import { comparisonAccordion } from './comparison/accordion-compare'
+import { comparisonVisualResults } from './comparison/visual-results'
+import { comparisonValueProp } from './comparison/value-prop'
+import { comparisonCardsCompare } from './comparison/cards-compare'
+
+import { portfolioProjectGrid } from './portfolio/project-grid'
+import { portfolioMasonry } from './portfolio/masonry-grid'
+import { portfolioFullSlider } from './portfolio/full-slider'
+import { portfolioCaseStudy } from './portfolio/case-study'
+import { portfolioVerticalList } from './portfolio/vertical-list'
+import { portfolioLogoHighlights } from './portfolio/logo-highlights'
+import { portfolioProjectMap } from './portfolio/project-map'
+import { portfolioMinimalList } from './portfolio/minimal-list'
+import { portfolioSplitHero } from './portfolio/split-hero'
+import { portfolioSpotlight } from './portfolio/spotlight'
+import { videoVslHero } from './video/vsl-hero'
+import { videoTestimonialReel } from './video/testimonial-reel'
+import { videoProductDemo } from './video/product-demo'
+import { videoBgVideo } from './video/bg-video'
+import { videoYoutubeEmbed } from './video/youtube-embed'
+import { videoMultiTabs } from './video/multi-video-tabs'
+import { videoStudioStyle } from './video/studio-style'
+import { videoGrid } from './video/video-grid'
+import { videoFloating } from './video/floating-video'
 
 // ── Registry ──────────────────────────────────────────────────────────────────
 
@@ -151,14 +209,81 @@ export const COMPONENT_REGISTRY: Record<string, ComponentVariant[]> = {
   ],
   faq: [faqAccordion],
   pricing: [pricingThreeTier],
-  portfolio: [portfolioProjectGrid],
+  portfolio: [
+    portfolioProjectGrid,
+    portfolioMasonry,
+    portfolioFullSlider,
+    portfolioCaseStudy,
+    portfolioVerticalList,
+    portfolioLogoHighlights,
+    portfolioProjectMap,
+    portfolioMinimalList,
+    portfolioSplitHero,
+    portfolioSpotlight,
+  ],
   // New section types
-  stats: [statsNumbersShowcase],
-  services: [servicesCardsGrid],
-  gallery: [galleryPhotoMasonry],
-  video: [videoFeatureShowcase],
-  blog: [blogArticlePreview],
-  comparison: [comparisonFeatureTable],
+  stats: [
+    statsNumbersShowcase,
+    statsMetricCards,
+  ],
+  services: [
+    servicesCardsGrid,
+    servicesListStyle,
+    servicesDarkCards,
+    servicesAccordion,
+    servicesMiniIcons,
+    servicesTierPackages,
+    servicesProcessServices,
+    servicesIconRow,
+    servicesFeaturedService,
+    servicesPricingList,
+  ],
+  gallery: [
+    galleryPhotoMasonry,
+    galleryUniformGrid,
+    galleryFeaturedLarge,
+    galleryHorizontalScroll,
+    galleryDarkShowcase,
+    galleryBeforeAfter,
+    galleryCarousel,
+    galleryVideoTiles,
+    galleryFilterCategory,
+    galleryPolaroidStack,
+    galleryFullBleed,
+  ],
+  video: [
+    videoFeatureShowcase,
+    videoVslHero,
+    videoTestimonialReel,
+    videoProductDemo,
+    videoBgVideo,
+    videoYoutubeEmbed,
+    videoMultiTabs,
+    videoStudioStyle,
+    videoGrid,
+    videoFloating,
+  ],
+  blog: [
+    blogArticlePreview,
+    blogFeaturedPost,
+    blogListView,
+    blogDark,
+    blogNewsletterBlog,
+    blogMinimal,
+    blogMagazineLayout,
+  ],
+  comparison: [
+    comparisonFeatureTable,
+    comparisonDarkTable,
+    comparisonSplitSide,
+    comparisonMatrixGrid,
+    comparisonCheckList,
+    comparisonCompetitorLogos,
+    comparisonAccordion,
+    comparisonVisualResults,
+    comparisonValueProp,
+    comparisonCardsCompare,
+  ],
 }
 
 // ── Industry Section Order ─────────────────────────────────────────────────────

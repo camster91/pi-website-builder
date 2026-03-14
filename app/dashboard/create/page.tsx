@@ -24,6 +24,7 @@ type SectionState = {
   title: string
   status: 'pending' | 'generating' | 'complete' | 'failed'
   order: number
+  message?: string // Added conversational message
 }
 
 type Plan = {
@@ -40,12 +41,26 @@ type Plan = {
   [key: string]: any  // allow extra fields from Gemini plan
 }
 
-const EXAMPLE_PROMPTS = [
-  "A modern SaaS landing page for an AI-powered analytics platform with pricing tiers and feature comparison",
-  "An elegant restaurant website with online menu, reservation system, and photo gallery",
-  "A minimalist portfolio site for a graphic designer showcasing creative projects and client testimonials",
-  "A professional law firm website with attorney bios, practice areas, and consultation booking"
-]
+const HUMAN_MESSAGES = {
+  error: [
+    "Hmm, something didn't go quite as planned. Let me try that again...",
+    "Oops! That didn't work out. Let's give it another go.",
+    "Bumping into a snag, but I'm working on it!"
+  ],
+  loading: [
+    "Finding the right look...",
+    "Brewing some design magic...",
+    "Piecing together your vision..."
+  ]
+}
+
+function getHumanMessage(category: keyof typeof HUMAN_MESSAGES): string {
+  const messages = HUMAN_MESSAGES[category]
+  return messages[Math.floor(Math.random() * messages.length)]
+}
+
+// --- Intentional Imperfection Helper ---
+const getRandomTilt = () => Math.random() > 0.8 ? `rotate(${Math.random() * 2 - 1}deg)` : 'none'
 
 export default function CreatePage() {
   const { data: session, status } = useSession()
@@ -53,6 +68,7 @@ export default function CreatePage() {
 
   // State
   const [step, setStep] = useState<Step>('describe')
+  const [density, setDensity] = useState<'spacious' | 'tight'>('spacious') // Added
   const [prompt, setPrompt] = useState('')
   const [plan, setPlan] = useState<Plan | null>(null)
   const [styleId, setStyleId] = useState<string>('')
@@ -225,14 +241,18 @@ export default function CreatePage() {
     if (data.type === 'project_created') {
       setProjectId(data.projectId)
     } else if (data.type === 'section_start') {
-      setSections(prev => prev.map(s => s.type === data.section ? { ...s, status: 'generating' } : s))
+      setSections(prev => prev.map(s => s.type === data.section ? { 
+        ...s, 
+        status: 'generating',
+        message: getStatusMessage(s.type) // Set the message here
+      } : s))
     } else if (data.type === 'section_done') {
-      setSections(prev => prev.map(s => s.type === data.section ? { ...s, status: 'complete' } : s))
+      setSections(prev => prev.map(s => s.type === data.section ? { ...s, status: 'complete', message: undefined } : s))
     } else if (data.type === 'section_error') {
-      setSections(prev => prev.map(s => s.type === data.section ? { ...s, status: 'failed' } : s))
+      setSections(prev => prev.map(s => s.type === data.section ? { ...s, status: 'failed', message: 'Failed to build' } : s))
     } else if (data.type === 'complete') {
       setProjectId(data.projectId)
-      setSections(prev => prev.map(s => s.status === 'generating' ? { ...s, status: 'complete' } : s))
+      setSections(prev => prev.map(s => s.status === 'generating' ? { ...s, status: 'complete', message: undefined } : s))
     } else if (data.type === 'error') {
       setError(data.message)
     }
@@ -400,6 +420,7 @@ export default function CreatePage() {
       <button
         key={style.id}
         onClick={() => setStyleId(style.id)}
+        style={{ transform: getRandomTilt() }}
         className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg text-left ${
           isSelected
             ? 'border-blue-600 ring-2 ring-blue-200 bg-blue-50'
@@ -488,7 +509,7 @@ export default function CreatePage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
+            <div className={`bg-white rounded-2xl shadow-xl ${density === 'spacious' ? 'p-12' : 'p-6'} mb-6`}>
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Describe your website
@@ -907,6 +928,9 @@ export default function CreatePage() {
                               }`}
                             >
                               {section.title}
+                              {section.status === 'generating' && section.message && (
+                                <p className="text-xs text-blue-600 mt-0.5 animate-pulse">{section.message}</p>
+                              )}
                             </span>
                           </button>
 
