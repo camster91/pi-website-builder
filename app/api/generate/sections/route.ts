@@ -12,7 +12,7 @@ const requestSchema = z.object({
   styleId: z.string(),
   plan: z.any(),
   paletteId: z.string().optional(),
-  customColors: z.record(z.string()).optional(),
+  customColors: z.record(z.string(), z.string()).optional(),
 })
 
 const SECTION_TYPES = [
