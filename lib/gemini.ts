@@ -463,6 +463,7 @@ ${html}`
     const effects = tok?.effects ?? {}
     const content = plan?.content ?? {}
     const planDesign = plan?.design ?? {}
+    const curatedImages = plan?._images ?? {}
 
     // Merge plan colors with style tokens (plan colors take precedence for brand specifics)
     const primary = planDesign.primaryColor || colors.primary || '#2563EB'
@@ -521,56 +522,75 @@ ${heroStyle === 'full-bleed' ? `  - Full bleed photography or color (${bg}), con
   - Min-height: 90vh, content centered vertically` : ''}
 
 HERO CONTENT DETAILS:
-- Eyebrow pill badge above headline: small rounded pill with a ✦ icon + short tagline
-- Main heading: "${content.heroHeading || 'Transform Your Business'}" — wrap ONE key word in <span class="accent-word">
-- Subheading (18px, ${textSec}): "${content.heroSubheading || 'Professional services tailored to your needs'}"
+- Eyebrow pill badge above headline: small rounded pill with a ✦ icon + short tagline (MAX 5 words)
+- Main heading: "${content.heroHeading || 'Transform Your Business'}" — wrap ONE key word in <span class="accent-word"> (MAX 8 words total)
+- Subheading (18px, ${textSec}): "${content.heroSubheading || 'Professional services tailored to your needs'}" (MAX 20 words)
 - Button pair side by side: Primary ("${content.heroCTA || 'Get Started'}") + Secondary ("${content.heroSecondaryCTA || 'Learn More'}")
 - BELOW the main content: a horizontal row of 3-4 trust indicators (small avatars + "X+ clients" or star rating badges)
 - Visual motifs to include: ${motifs}
-${glassmorph ? '- Include a glassmorphic floating card element (backdrop-filter blur, semi-transparent bg, border 1px rgba(255,255,255,0.2))' : ''}`,
+${glassmorph ? '- Include a glassmorphic floating card element (backdrop-filter blur, semi-transparent bg, border 1px rgba(255,255,255,0.2))' : ''}
+
+CURATED IMAGE (use this EXACT URL — it is a real, verified Unsplash image):
+${content._heroImage ? `- Hero image: ${content._heroImage}` : '- No hero image — use CSS gradients and decorative shapes only'}
+${(curatedImages.hero || []).length > 1 ? `- Alt hero images: ${curatedImages.hero.slice(1).join(', ')}` : ''}`,
       
       'social-proof': `
 SOCIAL PROOF STRIP — Horizontal stats row that builds immediate trust.
-- Background: ${bgSection} (slightly different from main bg for visual rhythm)
-- Layout: 4 stats in a horizontal flex row with subtle vertical dividers between them
-- Each stat: large bold number (clamp(48px,5vw,72px), font-weight 700, color ${primary}), label below (14px, ${textMuted}, uppercase, letter-spacing 0.08em)
-- Stats: ${JSON.stringify(content.socialProof || { stat1: {value:'500+', label:'Happy Clients'}, stat2: {value:'12yr', label:'Experience'}, stat3: {value:'4.9★', label:'Avg Rating'}, stat4: {value:'24/7', label:'Support'} })}
-- Below stats: horizontal logo scroller with "Trusted by" label — 5-6 company name pills or placeholder brand badges
-- Full width, generous padding, centered content`,
+- Background: ${bgSection}
+- Layout: 4 stats in a horizontal flex row with subtle vertical dividers (1px solid ${border})
+- Each stat: use class="counter" with data-target for animated counting
+  - Number: clamp(40px,5vw,64px), font-weight 700, color ${primary}
+  - Label: 13px, ${textMuted}, uppercase, letter-spacing 0.1em (MAX 2 words per label)
+- Stats: ${JSON.stringify(content.socialProof || { stat1: {value:'500+', label:'Clients'}, stat2: {value:'12', label:'Years'}, stat3: {value:'4.9', label:'Rating'}, stat4: {value:'24/7', label:'Support'} })}
+- BELOW stats: a marquee logo strip
+  - Use class="marquee-wrap" > "marquee-track" with 6 company name pills (plain text logos, no images)
+  - Style: font-size 14px, font-weight 600, opacity 0.4, gap 48px, uppercase
+- Section padding: 48px 0 (tighter than other sections — this is a strip)`,
 
       features: `
 FEATURES/SERVICES SECTION — 3-column card grid with hover effects.
 - Section background: ${bg}
-- Eyebrow: "WHAT WE OFFER" in ${primary}
-- Heading with ONE accented word
+- Eyebrow: "WHAT WE OFFER" in ${primary} (MAX 3 words)
+- Heading with ONE accented word (MAX 7 words)
+- Supporting paragraph (MAX 25 words)
 - 6 service cards in CSS grid (3 cols desktop, 2 tablet, 1 mobile)
 - Services: ${JSON.stringify(content.services || [])}
-- Each card: 
-  - 48×48px icon container (background ${primary} at 12% opacity, border-radius 12px) with inline SVG icon in ${primary}
-  - H3 heading, 2-line description, "Learn more →" link in ${primary}
+- Each card:
+  - 48×48px icon container (background ${primary} at 12% opacity, border-radius 14px) with one of these EXACT SVGs:
+    Card 1: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+    Card 2: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+    Card 3: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+    Card 4: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+    Card 5: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+    Card 6: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+  - H3 heading (MAX 3 words), description (MAX 15 words), "Learn more →" link
   - Card: background ${bgCard}, border 1px ${border}, border-radius 20px, padding 32px
   - Hover: translateY(-6px), shadow 0 20px 40px rgba(0,0,0,0.08), border-color ${primary}
-- Stagger cards: style="--i:0" through "--i:5" for reveal animation`,
+- Use class="reveal-stagger" on the grid parent for staggered reveal`,
 
       about: `
 ABOUT/WHO WE ARE SECTION — Split layout, 50/50, image left / text right (or reverse).
 - Background: ${bg}
-- Image side: tall image (aspect-ratio 4/5) with border-radius 24px, overlapping stat badge (absolute positioned card with a key metric)
-- Text side: eyebrow label, large heading with accented word, body paragraphs, 3 checkmark bullet points, dual CTA buttons
-- Checkmark bullets: inline SVG checkmark icon in ${primary}, text in ${textSec}
-- Content: ${JSON.stringify(content.about || {})}
-- The overlapping badge: background white, border-radius 16px, shadow, shows one impressive stat`,
+- Image side: use this EXACT image URL: ${content._aboutImage || 'CSS gradient placeholder'}
+  - Style: aspect-ratio 4/5, border-radius 24px, object-fit cover, class="img-zoom-wrap"
+  - Overlapping stat badge: position absolute, bottom -20px right -20px, background white, border-radius 16px, shadow, one impressive stat counter
+  - Add class="float-slow" on the badge for gentle floating animation
+- Text side: eyebrow label (MAX 3 words), large heading with accented word, body text (MAX 50 words), 3 checkmark bullet points, dual CTA buttons
+- Checkmark bullets: use this SVG: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+- Content: ${JSON.stringify(content.about || {})}`,
 
       testimonials: `
 TESTIMONIALS — Horizontal card scroller (Webflow-style).
 - Background: ${bgSection}
-- Eyebrow + heading with accented word above the scroller
-- Scroller: display flex, overflow-x auto, scroll-snap, scrollbar hidden, gap 24px, padding-bottom 16px (for scroll indicator)
-- 4 cards, each: width min(380px, 85vw), scroll-snap-align start, flex-shrink 0
-- Each card: background ${bgCard}, border-radius 20px, padding 32px
-  - 5 yellow SVG stars (★) at top
-  - Quote text (17px, line-height 1.65, ${text})
-  - Author row: initials circle (40px, ${primary} bg at 15%, ${primary} text, font-weight 700) + name bold + role in ${textMuted}
+- Eyebrow (MAX 2 words) + heading with ONE accented word (MAX 6 words)
+- Scroller: display flex, overflow-x auto, scroll-snap-type x mandatory, scrollbar-width none, gap 24px
+  - Hide scrollbar: ::-webkit-scrollbar { display: none }
+  - Mask edges: -webkit-mask: linear-gradient(90deg,transparent,black 5%,black 95%,transparent); mask: same
+- 4 cards, each: width min(380px, 85vw), scroll-snap-align start, flex 0 0 auto
+- Each card: background ${bgCard}, border 1px solid ${border}, border-radius 20px, padding 32px
+  - 5 star SVGs at top: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${accent}" stroke="${accent}" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+  - Quote text: MAX 30 words, 16px, line-height 1.7, color ${text}
+  - Author row: 44px initials circle (background ${primary}18, color ${primary}, font-weight 700, border-radius 50%) + name bold 15px + role 13px ${textMuted}
 - Cards: ${JSON.stringify(content.testimonials || [])}`,
 
       pricing: `
@@ -596,17 +616,19 @@ CTA BANNER — Full-width high-impact call to action.
       contact: `
 CONTACT SECTION — Split layout.
 - Background: ${bg}
-- Left (40%): contact details with inline SVG icons
-  - Email: "${content.contact?.email || 'hello@business.com'}"
-  - Phone: "${content.contact?.phone || '+1 (555) 000-0000'}"
-  - Address: "${content.contact?.address || '123 Business St, City, State'}"
-  - Hours: "${content.contact?.hours || 'Mon–Fri 9am–6pm'}"
-  - Each row: 40px icon circle (${primary} bg at 12%) + detail text
-- Right (60%): contact form
-  - Inputs: full border, border-radius 10px, padding 14px 18px, focus ring ${primary}
-  - Fields: Name, Email, Subject (optional), Message (textarea 4 rows)
-  - Submit: full-width ${primary} button, 16px, font-weight 600
-- The two halves separated by generous gap (48-64px)`,
+- Eyebrow (MAX 2 words) + heading with accented word (MAX 6 words)
+- Left (40%): contact details with these EXACT SVG icons:
+  - Email row: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> — "${content.contact?.email || 'hello@business.com'}"
+  - Phone row: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> — "${content.contact?.phone || '+1 (555) 000-0000'}"
+  - Location row: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> — "${content.contact?.address || 'City, State'}"
+  - Hours row: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> — "${content.contact?.hours || 'Mon–Fri 9am–6pm'}"
+  - Each row: 44px icon circle (background ${primary}12, color ${primary}) + text
+- Right (60%): contact form with class="contact-form"
+  - Inputs: border 1px solid ${border}, border-radius 12px, padding 14px 18px, focus: outline 2px solid ${primary}, outline-offset 2px
+  - Fields: Name (required), Email (required, type=email), Message (textarea, 4 rows, required)
+  - Submit button: full-width, background ${primary}, color white, padding 16px, border-radius 12px, font-weight 600
+  - Add button type="submit"
+- Grid gap: 64px between left and right`,
 
       footer: `
 FOOTER — Professional 4-column footer.
