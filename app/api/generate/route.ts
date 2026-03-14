@@ -172,7 +172,6 @@ export async function POST(req: NextRequest) {
           ? getImageUrl(aiImages.get('about')!)
           : fallbackImages.about[0],
         serviceImages: fallbackImages.services,
-        density: density,
       }
 
       // Inject images into plan for AI section generation
