@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Sparkles, AlertCircle, CreditCard, Loader2, CheckCircle2, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 
 const EXAMPLES = [
   'A modern plumbing company website for "QuickFix Plumbers" in Toronto. Include services page, about us, contact form with booking system. Use blue and white colors.',
@@ -31,7 +32,7 @@ function matchStep(status: string): number {
 }
 
 export default function CreatePage() {
-  const { data: session } = useSession()
+  const { data: session, update: updateSession } = useSession()
   const [prompt, setPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState('')
@@ -110,6 +111,8 @@ export default function CreatePage() {
               setDoneSteps([0, 1, 2, 3])
               setActiveStep(-1)
               setStatusMsg('Done! Redirecting...')
+              // Refresh JWT so credits update in navbar
+              await updateSession()
             }
           } catch {}
         }
