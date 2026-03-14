@@ -4,7 +4,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 const MODELS = {
   planner: 'gemini-2.0-flash',
-  coder: 'gemini-2.5-pro-exp-03-25',
+  coder: 'gemini-2.5-pro',
   qa: 'gemini-2.0-flash',
 }
 
