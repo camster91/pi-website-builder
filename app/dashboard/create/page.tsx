@@ -41,6 +41,33 @@ type Plan = {
   [key: string]: any  // allow extra fields from Gemini plan
 }
 
+const EXAMPLE_PROMPTS = [
+  "A modern SaaS landing page for an AI-powered analytics platform with pricing tiers and feature comparison",
+  "An elegant restaurant website with online menu, reservation system, and photo gallery",
+  "A minimalist portfolio site for a graphic designer showcasing creative projects and client testimonials",
+  "A professional law firm website with attorney bios, practice areas, and consultation booking"
+]
+
+const SECTION_STATUS_PHRASES: Record<string, string[]> = {
+  hero: ["Sketching your first impression...", "Crafting a powerful hero...", "Setting the stage..."],
+  'social-proof': ["Adding credibility...", "Highlighting your impact...", "Showcasing your supporters..."],
+  features: ["Detailing your unique power...", "Translating benefits to value...", "Refining your core offering..."],
+  about: ["Writing your unique story...", "Defining your vision...", "Crafting your brand identity..."],
+  testimonials: ["Adding social resonance...", "Listening to your customers...", "Amplifying trust..."],
+  cta: ["Polishing the call to action...", "Designing the closing move...", "Defining the next step..."],
+  contact: ["Making it easy to connect...", "Setting up the conversation...", "Designing your outreach..."],
+  footer: ["Rounding out your site...", "Finalizing the details...", "Adding the finishing touch..."],
+  pricing: ["Laying out your pricing...", "Structuring your offer...", "Making the value clear..."],
+  faq: ["Answering your visitors' questions...", "Clearing up confusion...", "Building confidence..."],
+  process: ["Mapping your workflow...", "Illustrating the journey...", "Showing how it works..."],
+  default: ["Polishing this section...", "Refining your content...", "Adding some human flair..."]
+}
+
+function getStatusMessage(type: string): string {
+  const phrases = SECTION_STATUS_PHRASES[type] || SECTION_STATUS_PHRASES.default
+  return phrases[Math.floor(Math.random() * phrases.length)]
+}
+
 const HUMAN_MESSAGES = {
   error: [
     "Hmm, something didn't go quite as planned. Let me try that again...",

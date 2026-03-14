@@ -321,7 +321,18 @@ const INJECT_BEFORE: Record<string, string> = {
   blog:       'cta',
 }
 
-export function buildSectionOrder(industry: string): string[] {
+const ARCHETYPES: Record<string, string[]> = {
+  'hero-journey': ['hero', 'about', 'process', 'testimonials', 'cta', 'contact', 'footer'],
+  'authority':    ['hero', 'social-proof', 'features', 'about', 'testimonials', 'cta', 'contact', 'footer'],
+  'minimalist':   ['hero', 'features', 'about', 'contact', 'footer'],
+  'conversion':   ['hero', 'features', 'pricing', 'faq', 'cta', 'contact', 'footer'],
+}
+
+export function buildSectionOrder(industry: string, archetype?: string): string[] {
+  if (archetype && ARCHETYPES[archetype]) {
+    return ARCHETYPES[archetype]
+  }
+
   const extras = new Set(INDUSTRY_EXTRA_SECTIONS[industry] || [])
   const sections = [...BASE_SECTIONS]
 
