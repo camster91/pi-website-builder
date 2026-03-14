@@ -48,7 +48,7 @@ class GeminiService {
     })
   }
 
-  private async generate(agent: AgentType, prompt: string, maxTokens?: number): Promise<GenerationResult> {
+  async generate(agent: AgentType, prompt: string, maxTokens?: number): Promise<GenerationResult> {
     const model = this.getModel(agent, maxTokens)
     const result = await model.generateContent(prompt)
     const text = result.response.text()

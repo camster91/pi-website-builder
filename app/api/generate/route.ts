@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -6,8 +6,11 @@ import { gemini } from '@/lib/gemini'
 import { ratelimit } from '@/lib/ratelimit'
 import { projectReadyEmail } from '@/lib/email'
 import { getImagesForIndustry } from '@/lib/image-bank'
-import { getFontPairForIndustry, type FontPair } from '@/lib/font-pairs'
-import { ICONS, SECTION_ICONS } from '@/lib/svg-icons'
+import { getFontPairForIndustry } from '@/lib/font-pairs'
+import { hasComponents, selectBestVariant } from '@/lib/components/registry'
+import { fillTemplate, type DesignTokens } from '@/lib/components/types'
+import { buildContentFillPrompt, parseContentFill } from '@/lib/components/content-fill'
+import { buildImagePrompts, generateImages, getImageUrl } from '@/lib/ai-images'
 import { z } from 'zod'
 
 const CREDIT_COST = 50
@@ -21,7 +24,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
     return await fn()
   } catch (err) {
     if (retries > 0) {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await new Promise((r) => setTimeout(r, 1500))
       return withRetry(fn, retries - 1)
     }
     throw err
@@ -29,12 +32,15 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
 }
 
 /**
- * Section-by-section generation pipeline:
+ * Hybrid generation pipeline:
  * 1. Plan → comprehensive JSON structure
- * 2. Enrich plan with curated images, fonts, icons
- * 3. Generate each section individually (16K tokens each)
- * 4. Assemble into complete HTML document
- * 5. QA pass for polish
+ * 2. Start AI image generation in background (parallel)
+ * 3. Enrich plan with curated fonts, icons, images
+ * 4. For each section:
+ *    - If component template exists → fill content slots (fast, guaranteed quality)
+ *    - If no template → full AI section generation (current approach)
+ * 5. Assemble into complete HTML document
+ * 6. QA pass for polish
  */
 export async function POST(req: NextRequest) {
   const encoder = new TextEncoder()
@@ -80,30 +86,15 @@ export async function POST(req: NextRequest) {
       const industry = plan.industry || 'local-service'
       const styleName = plan.style || 'modern'
 
-      // ── Step 2: Enrich plan with curated assets ──
-      send({ status: 'Selecting visuals and typography...', detail: `${industry} • ${styleName}` })
+      // ── Step 2: Start AI image generation in background ──
+      send({ status: 'Generating custom visuals...', detail: 'AI images + typography' })
 
-      // Get curated images
-      const images = getImagesForIndustry(industry)
-      plan._images = images
-
-      // Get curated font pair
+      // Build style object early
       const fontPair = getFontPairForIndustry(industry, styleName)
-      plan._fontPair = fontPair
-
-      // Override plan fonts with curated pair (better quality than AI-guessed)
       if (!plan.design) plan.design = {}
       plan.design.fontHeading = fontPair.heading
       plan.design.fontBody = fontPair.body
 
-      // Inject image URLs into plan content so section generator uses REAL URLs
-      if (!plan.content) plan.content = {}
-      plan.content._heroImage = images.hero[0]
-      plan.content._serviceImages = images.services
-      plan.content._aboutImage = images.about[0]
-      plan.content._backgroundImage = images.background[0]
-
-      // Build style object for section generation
       const style = {
         name: styleName,
         description: fontPair.vibe,
@@ -132,14 +123,58 @@ export async function POST(req: NextRequest) {
             heroStyle: plan.design.heroStyle || 'gradient-mesh',
             motifs: ['accent-word', 'floating-cards', 'trust-badges'],
           },
-          effects: {
-            glassmorphism: true,
-            shadow: 'large',
-          },
+          effects: { glassmorphism: true, shadow: 'large' },
         },
       }
 
-      // ── Step 3: Section-by-section generation ──
+      // Fire AI image generation in parallel (don't await yet)
+      const imagePrompts = buildImagePrompts(plan, style)
+      const imagePromise = generateImages(imagePrompts, industry, 25000)
+        .catch((err) => {
+          console.error('AI image generation failed:', err)
+          return null
+        })
+
+      // Get curated Unsplash images as fallback
+      const fallbackImages = getImagesForIndustry(industry)
+
+      // ── Step 3: Wait for images, prepare tokens ──
+      const aiImages = await imagePromise
+
+      // Build design tokens for component system
+      const tokens: DesignTokens = {
+        primary: style.tokens.colors.primary,
+        primaryDark: style.tokens.colors.primaryDark,
+        accent: style.tokens.colors.accent,
+        bg: style.tokens.colors.bg,
+        bgCard: style.tokens.colors.bgCard,
+        bgSection: style.tokens.colors.bgSection,
+        text: style.tokens.colors.text,
+        textSec: style.tokens.colors.textSecondary,
+        textMuted: style.tokens.colors.textMuted,
+        border: style.tokens.colors.border,
+        fontHeading: fontPair.heading,
+        fontBody: fontPair.body,
+        radius: style.tokens.shape.borderRadius,
+        // Use AI image if available, otherwise Unsplash
+        heroImage: aiImages
+          ? getImageUrl(aiImages.get('hero')!)
+          : fallbackImages.hero[0],
+        aboutImage: aiImages
+          ? getImageUrl(aiImages.get('about')!)
+          : fallbackImages.about[0],
+        serviceImages: fallbackImages.services,
+      }
+
+      // Inject images into plan for AI section generation
+      if (!plan.content) plan.content = {}
+      plan.content._heroImage = tokens.heroImage
+      plan.content._aboutImage = tokens.aboutImage
+      plan.content._serviceImages = tokens.serviceImages
+      plan._images = fallbackImages
+      plan._fontPair = fontPair
+
+      // ── Step 4: Section-by-section generation (hybrid) ──
       const sectionOrder = (plan.sections || [
         { type: 'hero' },
         { type: 'social-proof' },
@@ -151,16 +186,54 @@ export async function POST(req: NextRequest) {
         { type: 'footer' },
       ]).map((s: any) => s.type || s.id)
 
-      const generatedSections: Array<{ type: string; html: string }> = []
+      const generatedSections: Array<{ type: string; html: string; css?: string }> = []
       let previousHtml = ''
 
       for (let i = 0; i < sectionOrder.length; i++) {
         const sectionType = sectionOrder[i]
         const progress = Math.round(((i + 1) / sectionOrder.length) * 100)
-        
+
+        // Check if we have a pre-built component for this section
+        if (hasComponents(sectionType)) {
+          // ── Component path: fast, guaranteed quality ──
+          send({
+            status: `Building ${sectionType} section...`,
+            detail: `Component template (${i + 1}/${sectionOrder.length})`,
+            progress,
+          })
+
+          try {
+            const variant = selectBestVariant(
+              sectionType,
+              industry,
+              [],
+              plan.design?.heroStyle
+            )
+
+            if (variant) {
+              // Ask AI to fill content slots (small, fast prompt)
+              const fillPrompt = buildContentFillPrompt(variant, plan, sectionType)
+              const fillResult = await withRetry(() =>
+                gemini.generate('planner' as any, fillPrompt, 2048)
+              )
+              const filledContent = parseContentFill(fillResult.text)
+
+              // Fill the template
+              const { html, css } = fillTemplate(variant, filledContent, tokens)
+
+              generatedSections.push({ type: sectionType, html: `<style>${css}</style>\n${html}`, css })
+              previousHtml += '\n' + html
+              continue
+            }
+          } catch (compError) {
+            console.error(`Component fill failed for ${sectionType}, falling back to AI:`, compError)
+          }
+        }
+
+        // ── AI generation path: full section generation ──
         send({
           status: `Building ${sectionType} section...`,
-          detail: `Section ${i + 1}/${sectionOrder.length} (${progress}%)`,
+          detail: `AI generation (${i + 1}/${sectionOrder.length})`,
           progress,
         })
 
@@ -168,13 +241,10 @@ export async function POST(req: NextRequest) {
           const sectionHtml = await withRetry(() =>
             gemini.generateSection(plan, style, sectionType, previousHtml)
           )
-
           generatedSections.push({ type: sectionType, html: sectionHtml })
-          // Accumulate HTML for context continuity
           previousHtml += '\n' + sectionHtml
         } catch (sectionError) {
-          console.error(`Failed to generate section ${sectionType}:`, sectionError)
-          // Continue with remaining sections
+          console.error(`Failed to generate ${sectionType}:`, sectionError)
         }
       }
 
@@ -183,12 +253,12 @@ export async function POST(req: NextRequest) {
         return writer.close()
       }
 
-      // ── Step 4: Assemble complete document ──
+      // ── Step 5: Assemble ──
       send({ status: 'Assembling complete website...', detail: `${generatedSections.length} sections` })
       const assembledHtml = gemini.assembleWebsite(generatedSections, plan, style)
 
-      // ── Step 5: QA pass ──
-      send({ status: 'Final quality review...', detail: `${Math.round(assembledHtml.length / 1024)}KB — polishing` })
+      // ── Step 6: QA pass ──
+      send({ status: 'Final quality review...', detail: `${Math.round(assembledHtml.length / 1024)}KB` })
       const { html: finalHtml } = await withRetry(() =>
         gemini.reviewAndImprove(assembledHtml, plan)
       )
@@ -210,7 +280,7 @@ export async function POST(req: NextRequest) {
           status: 'DRAFT',
           creditsUsed: CREDIT_COST,
           generationTime: Math.round((Date.now() - startTime) / 1000),
-          name: plan.title ? `${plan.title}` : project.name,
+          name: plan.title || project.name,
         },
       })
 
@@ -219,7 +289,6 @@ export async function POST(req: NextRequest) {
         data: { credits: { decrement: CREDIT_COST } },
       })
 
-      // Email notification
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { email: true },
