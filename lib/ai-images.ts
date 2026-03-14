@@ -5,7 +5,7 @@
  * custom images for each website. Falls back to curated Unsplash.
  */
 
-import { GoogleGenAI, type ImageGenerationConfig } from '@google/genai'
+import { GoogleGenAI } from '@google/genai'
 import { getImagesForIndustry } from './image-bank'
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
@@ -138,8 +138,8 @@ async function generateSingleImage(req: ImageRequest): Promise<GeneratedImage | 
       prompt: req.prompt,
       config: {
         numberOfImages: 1,
-        aspectRatio: req.aspectRatio as any || '16:9',
-      } as ImageGenerationConfig,
+        aspectRatio: (req.aspectRatio || '16:9') as any,
+      } as any,
     })
 
     const image = response.generatedImages?.[0]
