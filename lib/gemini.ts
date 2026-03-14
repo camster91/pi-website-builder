@@ -694,18 +694,71 @@ FOOTER — Professional 4-column footer.
 - display: flex, overflow-x: auto, scroll-snap-type: x mandatory, scrollbar-width: none
 - Each card: scroll-snap-align: start, flex: 0 0 auto, width: min(380px, 85vw)
 
-### Image Treatment
-- All images use border-radius: 16-24px
-- Images in cards: aspect-ratio 4/3 or 16/9, object-fit cover
-- Portrait photos: aspect-ratio 3/4
-- Use unsplash URLs for placeholder images: https://images.unsplash.com/photo-[ID]?w=800&q=80
+### Image Treatment (Webflow-quality)
+- Wrap every image in: <div class="img-zoom-wrap img-rounded"><img ...></div> for zoom-on-hover
+- Images in cards: aspect-ratio 4/3, object-fit cover, border-radius 16px
+- Portrait photos: class="img-portrait" (aspect-ratio 3/4)
+- Full-width hero images: position absolute, inset 0, object-fit cover, z-index 0; add overlay div above
+- Floating stat cards over images: position absolute, right/left offset, background white, shadow, border-radius 16px
+- Add class="tilt" to hero image containers for subtle 3D mouse-tilt effect (JS handles it)
+- Unsplash placeholder URLs: https://images.unsplash.com/photo-[PHOTO_ID]?w=800&q=80&auto=format&fit=crop
+  Use REAL Unsplash photo IDs relevant to the industry — never use placeholder.com
 
-### Scroll Reveal
-- Add class="reveal" on sections and important elements
-- JS (already in page) adds .visible when in viewport
-- CSS: .reveal { opacity:0; transform:translateY(28px); transition:opacity 0.65s ease, transform 0.65s ease; } .reveal.visible { opacity:1; transform:none; }
-- Stagger children: .reveal-stagger > * { transition-delay: calc(var(--i,0) * 0.1s); }
-- Set --i: 0,1,2... on each child via inline style
+### Animations (ALL built into global JS/CSS — just use these classes)
+SCROLL REVEALS (JS observes these and adds .visible):
+- class="reveal" — fade up (default for most elements)
+- class="reveal reveal-left" — slide from left
+- class="reveal reveal-right" — slide from right  
+- class="reveal reveal-scale" — scale in
+- class="reveal-stagger" on the parent — children stagger in sequence
+- Add delay: class="reveal reveal-d1" through "reveal-d6"
+
+FLOATING ANIMATIONS (CSS keyframes, always active):
+- class="float" — gentle vertical bob (5s)
+- class="float-slow" — slow bob (7s)
+- class="float-xy" — XY drift (8s)
+- class="float-d1/d2/d3" — offset start time
+- Use on: hero mockups, floating stat cards, badge overlays
+
+MARQUEE (infinite scroll):
+- Wrap items: <div class="marquee-wrap"><div class="marquee-track">[items doubled]</div></div>
+
+COUNTERS (JS counts up when in viewport):
+- <span class="counter" data-target="500" data-suffix="+">500+</span>
+- data-prefix="$", data-suffix="%", data-decimals="1"
+
+PROGRESS BARS (JS fills when in viewport):
+- <div style="height:8px;background:var(--clr-border);border-radius:999px;overflow:hidden">
+    <div class="progress-fill" data-progress="80" style="height:100%;background:var(--clr-primary);width:0;border-radius:999px;transition:width 1.2s cubic-bezier(0.4,0,0.2,1)"></div>
+  </div>
+
+PARALLAX:
+- Add data-parallax="0.2" to background images/decorative elements (subtle 0.1-0.3 values)
+
+TILT (3D hover):
+- class="tilt" on image containers — JS adds perspective tilt on mousemove
+
+LINE DRAW:
+- SVG paths with class="draw-line" animate stroke on scroll
+
+BLOB SHAPE:
+- class="blob" on any element for morphing border-radius animation
+
+GLASSMORPHISM:
+- class="glass" — dark/on-dark-bg glass card
+- class="glass-light" — light glass card on light bg
+
+GRADIENT BORDER:
+- class="gradient-border" — animated gradient border on cards
+
+BACKGROUND PATTERNS:
+- class="bg-dots" — dot grid background
+- class="bg-grid" — line grid background  
+- class="bg-noise" — subtle film grain (via ::before pseudo)
+
+GLOW ORBS (decorative):
+- <div class="glow-orb" style="width:400px;height:400px;background:${primary}20;top:-100px;right:-100px;"></div>
+- Place absolutely inside a relative section for aurora-like background glow
 
 ## SECTION TO BUILD: ${sectionType.toUpperCase()}
 ${guidance}
@@ -870,71 +923,266 @@ Output ONLY the section HTML, starting with <style>/* ${sectionType} */`
     .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--clr-primary); }
 
     /* ── Scroll Reveal ── */
-    .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.75s cubic-bezier(0.4,0,0.2,1), transform 0.75s cubic-bezier(0.4,0,0.2,1); }
     .reveal.visible { opacity: 1; transform: translateY(0); }
-    .reveal-d1 { transition-delay: 0.1s; }
-    .reveal-d2 { transition-delay: 0.2s; }
-    .reveal-d3 { transition-delay: 0.3s; }
-    .reveal-d4 { transition-delay: 0.4s; }
-    .reveal-d5 { transition-delay: 0.5s; }
-    .reveal-d6 { transition-delay: 0.6s; }
+    .reveal-left { opacity: 0; transform: translateX(-40px); transition: opacity 0.75s cubic-bezier(0.4,0,0.2,1), transform 0.75s cubic-bezier(0.4,0,0.2,1); }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+    .reveal-right { opacity: 0; transform: translateX(40px); transition: opacity 0.75s cubic-bezier(0.4,0,0.2,1), transform 0.75s cubic-bezier(0.4,0,0.2,1); }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+    .reveal-scale { opacity: 0; transform: scale(0.92); transition: opacity 0.75s cubic-bezier(0.4,0,0.2,1), transform 0.75s cubic-bezier(0.4,0,0.2,1); }
+    .reveal-scale.visible { opacity: 1; transform: scale(1); }
+    .reveal-d1 { transition-delay: 0.1s; } .reveal-d2 { transition-delay: 0.2s; }
+    .reveal-d3 { transition-delay: 0.3s; } .reveal-d4 { transition-delay: 0.4s; }
+    .reveal-d5 { transition-delay: 0.5s; } .reveal-d6 { transition-delay: 0.6s; }
+    .reveal-stagger > * { opacity: 0; transform: translateY(24px); transition: opacity 0.6s cubic-bezier(0.4,0,0.2,1), transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+    .reveal-stagger.visible > *:nth-child(1){opacity:1;transform:none;transition-delay:0.05s;}
+    .reveal-stagger.visible > *:nth-child(2){opacity:1;transform:none;transition-delay:0.12s;}
+    .reveal-stagger.visible > *:nth-child(3){opacity:1;transform:none;transition-delay:0.19s;}
+    .reveal-stagger.visible > *:nth-child(4){opacity:1;transform:none;transition-delay:0.26s;}
+    .reveal-stagger.visible > *:nth-child(5){opacity:1;transform:none;transition-delay:0.33s;}
+    .reveal-stagger.visible > *:nth-child(6){opacity:1;transform:none;transition-delay:0.40s;}
+
+    /* ── Float animations ── */
+    @keyframes float-y { 0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)} }
+    @keyframes float-y-slow { 0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)} }
+    @keyframes float-xy { 0%,100%{transform:translate(0,0)}33%{transform:translate(6px,-14px)}66%{transform:translate(-5px,-8px)} }
+    .float { animation: float-y 5s ease-in-out infinite; }
+    .float-slow { animation: float-y-slow 7s ease-in-out infinite; }
+    .float-xy { animation: float-xy 8s ease-in-out infinite; }
+    .float-d1 { animation-delay: 0.5s; } .float-d2 { animation-delay: 1s; } .float-d3 { animation-delay: 1.5s; }
+
+    /* ── Marquee ── */
+    @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    .marquee-track { display:flex; width:max-content; animation:marquee 30s linear infinite; }
+    .marquee-track:hover { animation-play-state:paused; }
+    .marquee-wrap { overflow:hidden; -webkit-mask:linear-gradient(90deg,transparent,black 10%,black 90%,transparent); mask:linear-gradient(90deg,transparent,black 10%,black 90%,transparent); }
+
+    /* ── Image treatments ── */
+    .img-zoom-wrap { overflow:hidden; border-radius:inherit; }
+    .img-zoom-wrap img { transition:transform 0.6s cubic-bezier(0.4,0,0.2,1); width:100%; height:100%; object-fit:cover; display:block; }
+    .img-zoom-wrap:hover img { transform:scale(1.07); }
+    .img-rounded { border-radius:20px; overflow:hidden; }
+    .img-circle { border-radius:50%; overflow:hidden; aspect-ratio:1; }
+    .img-portrait { aspect-ratio:3/4; object-fit:cover; border-radius:20px; width:100%; }
+    .img-landscape { aspect-ratio:16/9; object-fit:cover; border-radius:20px; width:100%; }
+    .img-square { aspect-ratio:1; object-fit:cover; border-radius:20px; width:100%; }
+
+    /* ── Gradient overlays ── */
+    .overlay-dark::after { content:''; position:absolute; inset:0; background:linear-gradient(to bottom,rgba(0,0,0,0.15),rgba(0,0,0,0.5)); border-radius:inherit; pointer-events:none; }
+    .overlay-brand::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,${primary}60,${primaryDark}80); border-radius:inherit; mix-blend-mode:multiply; pointer-events:none; }
+
+    /* ── Background decorations ── */
+    .bg-dots { background-image:radial-gradient(circle,${primary}22 1.5px,transparent 1.5px); background-size:24px 24px; }
+    .bg-grid { background-image:linear-gradient(${border} 1px,transparent 1px),linear-gradient(90deg,${border} 1px,transparent 1px); background-size:40px 40px; }
+    .bg-noise { position:relative; }
+    .bg-noise::before { content:''; position:absolute; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:0; }
+    .glow-orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; }
+
+    /* ── Scroll progress bar ── */
+    #scroll-progress { position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,${primary},${accent}); width:0%; z-index:9999; transition:width 0.1s; }
+
+    /* ── Counters ── */
+    .counter { font-variant-numeric:tabular-nums; }
+
+    /* ── Animated gradient border ── */
+    .gradient-border { position:relative; }
+    .gradient-border::before { content:''; position:absolute; inset:-2px; background:linear-gradient(135deg,${primary},${accent},${primary}); background-size:300% 300%; border-radius:calc(var(--radius) + 2px); z-index:-1; animation:grad-spin 4s linear infinite; }
+    @keyframes grad-spin { 0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%} }
+
+    /* ── Glassmorphism ── */
+    .glass { background:rgba(255,255,255,0.08); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.15); }
+    .glass-light { background:rgba(255,255,255,0.7); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.5); }
+
+    /* ── Link underline animation ── */
+    .link-hover { position:relative; text-decoration:none; }
+    .link-hover::after { content:''; position:absolute; bottom:-1px; left:0; width:0; height:1.5px; background:currentColor; transition:width 0.3s ease; }
+    .link-hover:hover::after { width:100%; }
+
+    /* ── Accordion ── */
+    .accordion-body { display:grid; grid-template-rows:0fr; transition:grid-template-rows 0.35s ease; }
+    .accordion-body > div { overflow:hidden; }
+    .accordion-item.open .accordion-body { grid-template-rows:1fr; }
+    .accordion-icon { transition:transform 0.35s ease; }
+    .accordion-item.open .accordion-icon { transform:rotate(45deg); }
+
+    /* ── Blob shape ── */
+    @keyframes blob-morph { 0%,100%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%}50%{border-radius:30% 60% 70% 40%/50% 60% 30% 60%} }
+    .blob { animation:blob-morph 10s ease-in-out infinite; }
+
+    /* ── Pulse badge ── */
+    @keyframes pulse-ring { 0%{transform:scale(1);opacity:0.6}100%{transform:scale(1.8);opacity:0} }
+    .pulse-dot::before { content:''; position:absolute; inset:0; border-radius:50%; background:${primary}; animation:pulse-ring 1.8s ease-out infinite; }
   </style>
 </head>
 <body>
+
+<div id="scroll-progress"></div>
 
 ${sectionsHtml}
 
 <script>
 (function(){
-  // Scroll reveal
-  var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');}});
-  },{threshold:0.12});
-  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+  'use strict';
 
-  // Navbar scroll effect
-  var nav = document.querySelector('.navbar');
+  /* ── Scroll reveal (all variants) ── */
+  var revealClasses = ['.reveal','.reveal-left','.reveal-right','.reveal-scale','.reveal-stagger'];
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visible'); } });
+  },{threshold:0.1,rootMargin:'0px 0px -60px 0px'});
+  revealClasses.forEach(function(sel){
+    document.querySelectorAll(sel).forEach(function(el){ io.observe(el); });
+  });
+
+  /* ── Animated number counters ── */
+  var counterIO = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(!entry.isIntersecting) return;
+      counterIO.unobserve(entry.target);
+      var el = entry.target;
+      var target = parseFloat(el.dataset.target || el.textContent.replace(/[^0-9.]/g,''));
+      var suffix = el.dataset.suffix || el.textContent.replace(/[0-9.]/g,'');
+      var prefix = el.dataset.prefix || '';
+      var decimals = el.dataset.decimals ? parseInt(el.dataset.decimals) : 0;
+      var duration = 1800;
+      var start = performance.now();
+      function tick(now){
+        var progress = Math.min((now - start) / duration, 1);
+        var ease = 1 - Math.pow(1 - progress, 3);
+        var val = target * ease;
+        el.textContent = prefix + (decimals ? val.toFixed(decimals) : Math.floor(val).toLocaleString()) + suffix;
+        if(progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  },{threshold:0.5});
+  document.querySelectorAll('.counter').forEach(function(el){ counterIO.observe(el); });
+
+  /* ── Progress bar fills ── */
+  var progressIO = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      var bar = e.target;
+      var w = bar.dataset.progress || '0';
+      bar.style.width = w + '%';
+      progressIO.unobserve(bar);
+    });
+  },{threshold:0.5});
+  document.querySelectorAll('.progress-fill').forEach(function(el){ progressIO.observe(el); });
+
+  /* ── Scroll progress bar ── */
+  var progressBar = document.getElementById('scroll-progress');
+  window.addEventListener('scroll',function(){
+    if(!progressBar) return;
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = ((window.scrollY / max) * 100) + '%';
+  },{passive:true});
+
+  /* ── Navbar: blur on scroll + active states ── */
+  var nav = document.querySelector('.navbar, nav, header');
   if(nav){
     window.addEventListener('scroll',function(){
       nav.classList.toggle('scrolled', window.scrollY > 50);
     },{passive:true});
   }
 
-  // Mobile menu
-  var toggle = document.querySelector('.menu-toggle');
-  var menu = document.querySelector('.nav-menu');
+  /* ── Mobile menu ── */
+  var toggle = document.querySelector('.menu-toggle, .nav-toggle, .hamburger');
+  var menu = document.querySelector('.nav-menu, .mobile-menu, [data-menu]');
   if(toggle && menu){
     toggle.addEventListener('click',function(){
       var open = menu.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      document.body.style.overflow = open ? 'hidden' : '';
+    });
+    document.querySelectorAll('.nav-menu a, .mobile-menu a').forEach(function(a){
+      a.addEventListener('click',function(){
+        menu.classList.remove('open');
+        document.body.style.overflow = '';
+        toggle.setAttribute('aria-expanded','false');
+      });
     });
   }
 
-  // Close mobile menu on link click
-  document.querySelectorAll('.nav-menu a').forEach(function(a){
-    a.addEventListener('click',function(){if(menu)menu.classList.remove('open');});
-  });
-
-  // Active nav on scroll
-  var sections = document.querySelectorAll('section[id]');
-  var navLinks = document.querySelectorAll('.nav-link');
+  /* ── Active nav link on scroll ── */
+  var sections = document.querySelectorAll('section[id], div[id].section');
+  var navLinks = document.querySelectorAll('.nav-link, .nav-menu a');
   window.addEventListener('scroll',function(){
     var cur='';
-    sections.forEach(function(s){if(window.scrollY >= s.offsetTop - 120)cur=s.id;});
+    sections.forEach(function(s){ if(window.scrollY >= s.offsetTop - 150) cur = s.id; });
     navLinks.forEach(function(l){
-      l.classList.toggle('active', l.getAttribute('href')==='#'+cur);
+      l.classList.toggle('active', l.getAttribute('href') === '#' + cur);
     });
   },{passive:true});
 
-  // Contact form
-  var form = document.querySelector('.contact-form');
+  /* ── Accordion ── */
+  document.querySelectorAll('.accordion-trigger').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var item = btn.closest('.accordion-item');
+      var isOpen = item.classList.contains('open');
+      document.querySelectorAll('.accordion-item.open').forEach(function(i){ i.classList.remove('open'); });
+      if(!isOpen) item.classList.add('open');
+    });
+  });
+
+  /* ── Image lazy tilt on hover (subtle) ── */
+  document.querySelectorAll('.tilt').forEach(function(el){
+    el.addEventListener('mousemove',function(e){
+      var r = el.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width - 0.5;
+      var y = (e.clientY - r.top) / r.height - 0.5;
+      el.style.transform = 'perspective(800px) rotateY('+(x*8)+'deg) rotateX('+(-y*8)+'deg) translateZ(10px)';
+    });
+    el.addEventListener('mouseleave',function(){
+      el.style.transform = '';
+    });
+  });
+
+  /* ── Parallax (subtle) ── */
+  var parallaxEls = document.querySelectorAll('[data-parallax]');
+  if(parallaxEls.length){
+    window.addEventListener('scroll',function(){
+      parallaxEls.forEach(function(el){
+        var speed = parseFloat(el.dataset.parallax || '0.3');
+        var offset = window.scrollY * speed;
+        el.style.transform = 'translateY('+offset+'px)';
+      });
+    },{passive:true});
+  }
+
+  /* ── SVG line draw on scroll ── */
+  document.querySelectorAll('.draw-line').forEach(function(el){
+    var len = el.getTotalLength ? el.getTotalLength() : 400;
+    el.style.strokeDasharray = len;
+    el.style.strokeDashoffset = len;
+    var lineIO = new IntersectionObserver(function(entries){
+      if(entries[0].isIntersecting){
+        el.style.transition = 'stroke-dashoffset 1.5s ease';
+        el.style.strokeDashoffset = '0';
+        lineIO.unobserve(el);
+      }
+    });
+    lineIO.observe(el);
+  });
+
+  /* ── Contact form ── */
+  var form = document.querySelector('.contact-form, form[data-contact]');
   if(form){
     form.addEventListener('submit',function(e){
       e.preventDefault();
       var btn = form.querySelector('button[type=submit]');
-      if(btn){btn.textContent='Sent! We\'ll be in touch.';btn.disabled=true;btn.style.background='#22c55e';}
+      if(btn){ btn.textContent = "Sent! We'll be in touch."; btn.disabled = true; btn.style.background = '#22c55e'; }
     });
   }
+
+  /* ── Smooth anchor scroll ── */
+  document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    a.addEventListener('click',function(e){
+      var id = a.getAttribute('href').slice(1);
+      var target = document.getElementById(id);
+      if(target){ e.preventDefault(); target.scrollIntoView({behavior:'smooth',block:'start'}); }
+    });
+  });
+
 })();
 </script>
 </body>
