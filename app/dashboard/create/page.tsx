@@ -335,11 +335,11 @@ export default function CreatePage() {
   // Render color swatches
   const renderColorSwatches = (style: typeof DESIGN_STYLES[0]) => {
     const colors = [
-      style.colors.primary,
-      style.colors.accent,
-      style.colors.background,
-      style.colors.cardBackground,
-      style.colors.text,
+      style.tokens.colors.primary,
+      style.tokens.colors.accent,
+      style.tokens.colors.bg,
+      style.tokens.colors.bgCard,
+      style.tokens.colors.text,
     ]
 
     return (
@@ -371,7 +371,7 @@ export default function CreatePage() {
         
         <h3
           className="text-xl font-semibold mb-2"
-          style={{ fontFamily: style.fonts.heading }}
+          style={{ fontFamily: style.tokens.typography.fontHeading }}
         >
           {style.name}
         </h3>
