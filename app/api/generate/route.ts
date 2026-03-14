@@ -7,7 +7,7 @@ import { ratelimit } from '@/lib/ratelimit'
 import { projectReadyEmail } from '@/lib/email'
 import { getImagesForIndustry } from '@/lib/image-bank'
 import { getFontPairForIndustry } from '@/lib/font-pairs'
-import { hasComponents, selectBestVariant } from '@/lib/components/registry'
+import { hasComponents, selectBestVariant, buildSectionOrder } from '@/lib/components/registry'
 import { fillTemplate, type DesignTokens } from '@/lib/components/types'
 import { buildContentFillPrompt, parseContentFill } from '@/lib/components/content-fill'
 import { buildImagePrompts, generateImages, getImageUrl } from '@/lib/ai-images'
@@ -175,16 +175,10 @@ export async function POST(req: NextRequest) {
       plan._fontPair = fontPair
 
       // ── Step 4: Section-by-section generation (hybrid) ──
-      const sectionOrder = (plan.sections || [
-        { type: 'hero' },
-        { type: 'social-proof' },
-        { type: 'features' },
-        { type: 'about' },
-        { type: 'testimonials' },
-        { type: 'cta' },
-        { type: 'contact' },
-        { type: 'footer' },
-      ]).map((s: any) => s.type || s.id)
+      // Smart section order: use plan's sections OR build from industry
+      const sectionOrder = plan.sections && plan.sections.length > 0
+        ? plan.sections.map((s: any) => s.type || s.id)
+        : buildSectionOrder(industry)
 
       const generatedSections: Array<{ type: string; html: string; css?: string }> = []
       let previousHtml = ''
@@ -206,8 +200,9 @@ export async function POST(req: NextRequest) {
             const variant = selectBestVariant(
               sectionType,
               industry,
-              [],
-              plan.design?.heroStyle
+              plan.design?.tags || [],
+              plan.design?.heroStyle,
+              project.id  // seed for variety
             )
 
             if (variant) {
