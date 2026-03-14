@@ -27,13 +27,17 @@ type SectionState = {
 }
 
 type Plan = {
-  projectName: string
-  suggestions: string[]
-  sections: Array<{
+  projectName?: string
+  title?: string
+  tagline?: string
+  hasPricing?: boolean
+  suggestions?: string[]
+  sections?: Array<{
     type: string
     title: string
     order: number
   }>
+  [key: string]: any  // allow extra fields from Gemini plan
 }
 
 const EXAMPLE_PROMPTS = [
