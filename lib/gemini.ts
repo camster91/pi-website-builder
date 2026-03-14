@@ -485,81 +485,143 @@ ${html}`
 
     const sectionGuidance: Record<string, string> = {
       hero: `
-HERO SECTION — This is the most important section. Must be visually striking.
-${heroStyle === 'dark-gradient' ? `- Dark background: ${colors.bg}, large display heading in ${colors.text || 'white'}, subtle animated floating shapes in background using CSS keyframes` : ''}
-${heroStyle === 'gradient-mesh' ? `- Mesh gradient background: radial-gradient(ellipse 80% 80% at 50% -20%, ${primary}25 0%, transparent 50%), linear-gradient(135deg, ${bg} 60%, ${accent}15 100%)` : ''}
-${heroStyle === 'split-screen' ? `- 50/50 split: text left on ${bg}, gradient right ${primary}15 to ${accent}10` : ''}
-${heroStyle === 'minimal-centered' ? `- Pure white with large centered heading, subtle dot/grid pattern background` : ''}
-${heroStyle === 'editorial' ? `- Bold oversized heading, text-only layout, strong typographic contrast` : ''}
-${heroStyle === 'full-bleed' ? `- Full-height section with strong color background ${colors.bg}, text centered` : ''}
-- Visual motifs: ${motifs}
-- Content: heading="${content.heroHeading}", subheading="${content.heroSubheading}", CTA="${content.heroCTA}", secondaryCTA="${content.heroSecondaryCTA}"
-- Include glassmorphism scroll indicator${glassmorph ? ' and glassmorphic card overlay' : ''}`,
+HERO SECTION — The most important section. Webflow-template quality. Visually stunning.
+
+STRUCTURE:
+- Include a STICKY NAVIGATION BAR at the top of this section (it's the first section):
+  - backdrop-filter: blur(16px), background: ${bg} at 92% opacity
+  - border-bottom: 1px solid ${border}
+  - Layout: logo name left | nav links center (hidden on mobile) | CTA button right
+  - Hamburger icon for mobile (inline SVG)
+  - Position: sticky, top: 0, z-index: 1000
+
+- HERO CONTENT below nav:
+${heroStyle === 'dark-gradient' ? `  - Dark full-width background (${bg}), min-height: 85vh
+  - Centered or left-aligned layout
+  - Animated gradient orbs using CSS @keyframes (soft glow circles in ${primary} and ${accent} at low opacity)
+  - Large display heading in white, one word in ${accent}` : ''}
+${heroStyle === 'gradient-mesh' ? `  - Background: warm neutral (${bg}) with decorative radial gradient: radial-gradient(ellipse 60% 60% at 70% 50%, ${primary}18 0%, transparent 60%)
+  - Split layout: text left (55%) | floating card/image right (45%)
+  - The right side: a floating card or mockup with shadow, slightly rotated 2deg, showing a relevant UI element or stat
+  - Min-height: 80vh, align-items center` : ''}
+${heroStyle === 'split-screen' ? `  - True 50/50 split: left side solid ${primary} with white text | right side ${bg} with dark text
+  - OR: left text, right large photography image (border-radius 0 on the edge touching split)
+  - Min-height: 85vh` : ''}
+${heroStyle === 'minimal-centered' ? `  - Pure warm neutral background (${bg}), centered layout
+  - Very large display heading (clamp(56px,8vw,100px)), minimal UI
+  - Subtle dot-grid or line-grid CSS background pattern
+  - Badge/pill above heading: "✦ [Industry tagline]" styled pill
+  - Min-height: 75vh` : ''}
+${heroStyle === 'editorial' ? `  - Black or very dark background, full viewport height
+  - Oversized editorial heading (clamp(60px,8vw,120px)), tight line-height 0.95
+  - White text, one word in ${accent}
+  - Simple single CTA button, outlined white` : ''}
+${heroStyle === 'full-bleed' ? `  - Full bleed photography or color (${bg}), content overlaid
+  - Dark text on light or white text on dark, depends on background
+  - Min-height: 90vh, content centered vertically` : ''}
+
+HERO CONTENT DETAILS:
+- Eyebrow pill badge above headline: small rounded pill with a ✦ icon + short tagline
+- Main heading: "${content.heroHeading || 'Transform Your Business'}" — wrap ONE key word in <span class="accent-word">
+- Subheading (18px, ${textSec}): "${content.heroSubheading || 'Professional services tailored to your needs'}"
+- Button pair side by side: Primary ("${content.heroCTA || 'Get Started'}") + Secondary ("${content.heroSecondaryCTA || 'Learn More'}")
+- BELOW the main content: a horizontal row of 3-4 trust indicators (small avatars + "X+ clients" or star rating badges)
+- Visual motifs to include: ${motifs}
+${glassmorph ? '- Include a glassmorphic floating card element (backdrop-filter blur, semi-transparent bg, border 1px rgba(255,255,255,0.2))' : ''}`,
       
       'social-proof': `
-SOCIAL PROOF STRIP — 4 statistics that establish trust immediately.
-- Background: ${bgSection}
-- Stats: ${JSON.stringify(content.socialProof || { stat1: {value:'500+', label:'Clients'}, stat2: {value:'10yr', label:'Experience'}, stat3: {value:'4.9★', label:'Rating'}, stat4: {value:'24/7', label:'Support'} })}
-- Layout: horizontal flex row with dividers, reveal on scroll
-- Typography: large bold number in ${primary}, small label in ${textMuted}`,
+SOCIAL PROOF STRIP — Horizontal stats row that builds immediate trust.
+- Background: ${bgSection} (slightly different from main bg for visual rhythm)
+- Layout: 4 stats in a horizontal flex row with subtle vertical dividers between them
+- Each stat: large bold number (clamp(48px,5vw,72px), font-weight 700, color ${primary}), label below (14px, ${textMuted}, uppercase, letter-spacing 0.08em)
+- Stats: ${JSON.stringify(content.socialProof || { stat1: {value:'500+', label:'Happy Clients'}, stat2: {value:'12yr', label:'Experience'}, stat3: {value:'4.9★', label:'Avg Rating'}, stat4: {value:'24/7', label:'Support'} })}
+- Below stats: horizontal logo scroller with "Trusted by" label — 5-6 company name pills or placeholder brand badges
+- Full width, generous padding, centered content`,
 
       features: `
-FEATURES/SERVICES SECTION — 6 cards in a 3-column CSS Grid.
+FEATURES/SERVICES SECTION — 3-column card grid with hover effects.
 - Section background: ${bg}
+- Eyebrow: "WHAT WE OFFER" in ${primary}
+- Heading with ONE accented word
+- 6 service cards in CSS grid (3 cols desktop, 2 tablet, 1 mobile)
 - Services: ${JSON.stringify(content.services || [])}
-- Each card: inline SVG icon in a ${primary}20 circle (24×24 SVG with currentColor stroke), h3 heading, description, subtle hover lift
-- Card style: background ${bgCard}, border 1px ${border}, border-radius ${radius}
-- Card hover: translateY(-4px), box-shadow, border-color ${primary}
-- Add staggered reveal animation (0.1s delay per card)`,
+- Each card: 
+  - 48×48px icon container (background ${primary} at 12% opacity, border-radius 12px) with inline SVG icon in ${primary}
+  - H3 heading, 2-line description, "Learn more →" link in ${primary}
+  - Card: background ${bgCard}, border 1px ${border}, border-radius 20px, padding 32px
+  - Hover: translateY(-6px), shadow 0 20px 40px rgba(0,0,0,0.08), border-color ${primary}
+- Stagger cards: style="--i:0" through "--i:5" for reveal animation`,
 
       about: `
-ABOUT SECTION — Split layout with text + visual element.
-- Text side: eyebrow label in ${primary}, h2 heading, body text, 3 bullet points with inline SVG checkmarks
-- Visual side: a styled blockquote card OR decorative element using ${primary} and ${accent} as accent colors
-- Content: ${JSON.stringify(content.about || {})}`,
+ABOUT/WHO WE ARE SECTION — Split layout, 50/50, image left / text right (or reverse).
+- Background: ${bg}
+- Image side: tall image (aspect-ratio 4/5) with border-radius 24px, overlapping stat badge (absolute positioned card with a key metric)
+- Text side: eyebrow label, large heading with accented word, body paragraphs, 3 checkmark bullet points, dual CTA buttons
+- Checkmark bullets: inline SVG checkmark icon in ${primary}, text in ${textSec}
+- Content: ${JSON.stringify(content.about || {})}
+- The overlapping badge: background white, border-radius 16px, shadow, shows one impressive stat`,
 
       testimonials: `
-TESTIMONIALS — 3 cards in a row.
+TESTIMONIALS — Horizontal card scroller (Webflow-style).
 - Background: ${bgSection}
-- Cards: ${JSON.stringify(content.testimonials || [])}
-- Each card: 5-star rating (inline SVG stars in ${accent}), quote text, avatar (initials circle in ${primary}, color-contrasted), author name bold, role in ${textMuted}
-- Card hover effect, subtle shadow`,
+- Eyebrow + heading with accented word above the scroller
+- Scroller: display flex, overflow-x auto, scroll-snap, scrollbar hidden, gap 24px, padding-bottom 16px (for scroll indicator)
+- 4 cards, each: width min(380px, 85vw), scroll-snap-align start, flex-shrink 0
+- Each card: background ${bgCard}, border-radius 20px, padding 32px
+  - 5 yellow SVG stars (★) at top
+  - Quote text (17px, line-height 1.65, ${text})
+  - Author row: initials circle (40px, ${primary} bg at 15%, ${primary} text, font-weight 700) + name bold + role in ${textMuted}
+- Cards: ${JSON.stringify(content.testimonials || [])}`,
 
       pricing: `
-PRICING TABLE — 3-tier layout.
-- Middle "Pro" tier is highlighted with ${primary} border + "Most Popular" badge
-- Starter tier: FREE or entry price, basic features list
-- Pro tier: main price, full features, primary CTA button
-- Enterprise: "Custom", contact sales
-- checkmarks: inline SVG in ${primary}`,
+PRICING TABLE — 3-tier horizontal layout.
+- Background: ${bg}
+- Eyebrow + heading, centered
+- 3 columns: Starter | Pro (featured) | Enterprise
+- Featured "Pro" card: border 2px ${primary}, scale(1.03), "Most Popular" pill badge (${primary} bg, white text) at top
+- Each tier: price large (clamp(40px,5vw,60px), font-weight 700), /month label, feature list with SVG checkmarks in ${primary}, CTA button
+- Starter CTA: outlined secondary button | Pro CTA: solid ${primary} button | Enterprise CTA: outlined
+- Feature list: 5-7 items per tier, strikethrough on missing features in Starter
+- Annual/monthly toggle at top (UI element, even if non-functional)`,
 
       cta: `
-CTA BANNER — Full-width call to action.
-- Background: gradient from ${primary} to ${primaryDark} or ${accent}
-- Large heading in white, supporting text, white ghost button
-- Subtle background pattern or floating shapes`,
+CTA BANNER — Full-width high-impact call to action.
+- Background: gradient from ${primary} to ${primaryDark} (or dark solid if style is dark)
+- Large white heading (clamp(36px,5vw,60px)), ONE word accented in ${accent} or a lighter tint
+- Supporting text in white at 80% opacity
+- Two buttons: white solid + white outlined ghost
+- Subtle background decoration: CSS radial-gradient light spots, or large faded text watermark
+- Generous padding: clamp(5rem,8vw,8rem) 0`,
 
       contact: `
 CONTACT SECTION — Split layout.
-- Left: contact info with inline SVG icons for email "${content.contact?.email}", phone "${content.contact?.phone}", address "${content.contact?.address}", hours "${content.contact?.hours}"
-- Right: form with name, email, message, submit button
-- Form inputs: clean border-bottom or full border, focus ring in ${primary}
-- Submit button: ${primary} background`,
+- Background: ${bg}
+- Left (40%): contact details with inline SVG icons
+  - Email: "${content.contact?.email || 'hello@business.com'}"
+  - Phone: "${content.contact?.phone || '+1 (555) 000-0000'}"
+  - Address: "${content.contact?.address || '123 Business St, City, State'}"
+  - Hours: "${content.contact?.hours || 'Mon–Fri 9am–6pm'}"
+  - Each row: 40px icon circle (${primary} bg at 12%) + detail text
+- Right (60%): contact form
+  - Inputs: full border, border-radius 10px, padding 14px 18px, focus ring ${primary}
+  - Fields: Name, Email, Subject (optional), Message (textarea 4 rows)
+  - Submit: full-width ${primary} button, 16px, font-weight 600
+- The two halves separated by generous gap (48-64px)`,
 
       footer: `
-FOOTER — Professional multi-column footer.
-- Background: ${colors.secondary || '#0F172A'} or dark variant
-- Logo + tagline left column
-- Quick links column
-- Contact info column  
-- Social media SVG icons (inline)
-- Bottom bar: copyright + Privacy Policy + Terms links
-- Content: ${JSON.stringify(content.footer || {})}`
+FOOTER — Professional 4-column footer.
+- Background: dark (${colors.secondary || '#0f172a'}) or very dark version of primary
+- 4 columns: (1) Logo + tagline + social icons | (2) Quick Links | (3) Services | (4) Contact info
+- Logo: business name in white, large, bold; tagline in muted
+- Social icons: inline SVG, 40px circles with light border, Twitter/X, LinkedIn, Instagram, Facebook
+- Link columns: heading in uppercase ${primary} 13px, links in gray-300 hover white
+- Bottom bar: 1px top border, copyright left, Privacy + Terms links right
+- All text content from: ${JSON.stringify(content.footer || {})}`
     }
 
     const guidance = sectionGuidance[sectionType] || `Generate the "${sectionType}" section with all relevant content from the plan.`
 
-    const systemPrompt = `You are a world-class frontend developer creating a premium ${style?.name || 'modern'} website. You are generating ONE section of a multi-section page.
+    const systemPrompt = `You are a world-class frontend developer building premium websites at Webflow-template quality level. You are generating ONE section of a multi-section page.
 
 ## BUSINESS CONTEXT
 - Name: ${plan?.title || 'Business'}
@@ -568,7 +630,7 @@ FOOTER — Professional multi-column footer.
 - Tone: ${plan?.tone || 'professional'}
 - Target Audience: ${plan?.targetAudience || 'general audience'}
 
-## CSS DESIGN TOKENS (use these CSS variables — they are defined in the page's global <style>)
+## CSS DESIGN TOKENS (already defined globally — use these variables)
 \`\`\`
 --clr-primary: ${primary}
 --clr-primary-dark: ${primaryDark}
@@ -586,27 +648,84 @@ FOOTER — Professional multi-column footer.
 --transition: 250ms cubic-bezier(0.4, 0, 0.2, 1)
 \`\`\`
 
+## WEBFLOW-QUALITY DESIGN STANDARDS (mandatory)
+
+### Color Usage
+- Use warm neutral backgrounds (${bg}) — never pure #ffffff or #000000 unless that IS the token
+- ONE accent word per headline: wrap a key word in <span class="accent-word"> styled with --clr-accent color
+- Accent color appears on: that one word, icons, badge backgrounds (at 15% opacity), hover states
+- Never use more than 3 colors in any single section
+
+### Typography
+- Hero headline: clamp(48px, 6vw, 80px), font-weight 700, line-height 1.05, letter-spacing -0.025em
+- H2 sections: clamp(36px, 4vw, 56px), font-weight 600, line-height 1.1
+- H3 cards: clamp(18px, 2vw, 24px), font-weight 600
+- Body text: 17-18px, line-height 1.65, color var(--clr-text-sec)
+- Eyebrow labels: 12-13px, font-weight 600, letter-spacing 0.12em, UPPERCASE, color var(--clr-primary)
+
+### Spacing (8px base unit system)
+- Section padding: clamp(5rem, 10vw, 9rem) 0 (top and bottom)
+- Container max-width: 1280px, auto margins, padding: 0 clamp(1.5rem, 5vw, 4rem)
+- Grid gaps: 24px (tight), 32px (standard), 48px (loose)
+- Between elements within a section: multiples of 8px
+
+### Cards & UI Elements
+- Cards: background var(--clr-bg-card), border-radius 20px, padding 32-40px
+- Card border: 1px solid var(--clr-border)
+- Card hover: transform translateY(-6px), box-shadow 0 20px 40px rgba(0,0,0,0.08), border-color var(--clr-primary)
+- Transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)
+- Buttons: padding 15px 32px, border-radius 12px, font-weight 600, font-size 15px
+  - Primary: background var(--clr-primary), color #fff
+  - Secondary: background transparent, border 2px solid var(--clr-text), color var(--clr-text)
+  - Always provide BOTH primary and secondary CTA together
+
+### Trust & Social Proof Elements
+- Badges/pills: border-radius 999px, padding 6px 14px, font-size 13px, font-weight 600
+- Star ratings: inline SVG, filled color var(--clr-accent)
+- Statistics: large number (56-72px, font-weight 700, color var(--clr-primary)), small label below
+- User avatars: initials circles, background var(--clr-primary) at 15% opacity, text var(--clr-primary)
+
+### Navigation (hero section only if generating nav)
+- Sticky header: position sticky, top 0, backdrop-filter blur(16px), background color at 90% opacity
+- Logo left | nav links center | CTA button right
+- Border-bottom: 1px solid var(--clr-border)
+
+### Horizontal Card Scroller Pattern (use for testimonials, features on mobile)
+- display: flex, overflow-x: auto, scroll-snap-type: x mandatory, scrollbar-width: none
+- Each card: scroll-snap-align: start, flex: 0 0 auto, width: min(380px, 85vw)
+
+### Image Treatment
+- All images use border-radius: 16-24px
+- Images in cards: aspect-ratio 4/3 or 16/9, object-fit cover
+- Portrait photos: aspect-ratio 3/4
+- Use unsplash URLs for placeholder images: https://images.unsplash.com/photo-[ID]?w=800&q=80
+
+### Scroll Reveal
+- Add class="reveal" on sections and important elements
+- JS (already in page) adds .visible when in viewport
+- CSS: .reveal { opacity:0; transform:translateY(28px); transition:opacity 0.65s ease, transform 0.65s ease; } .reveal.visible { opacity:1; transform:none; }
+- Stagger children: .reveal-stagger > * { transition-delay: calc(var(--i,0) * 0.1s); }
+- Set --i: 0,1,2... on each child via inline style
+
 ## SECTION TO BUILD: ${sectionType.toUpperCase()}
 ${guidance}
 
 ## ABSOLUTE RULES
 1. Output ONLY the section HTML — no <!DOCTYPE>, no <html>, no <head>, no <body> tags
-2. NO Tailwind classes, NO Bootstrap — only vanilla CSS in a <style> block scoped to this section
-3. Start your output with: <style>/* ${sectionType} */
+2. NO Tailwind, NO Bootstrap, NO external CSS — only vanilla CSS in a <style> block
+3. Start output with: <style>/* ${sectionType} */
 4. All icons must be inline SVG — never img tags, never icon fonts
-5. All CSS must use the --clr-* and --font-* variables defined above
-6. Section MUST have: id="${sectionType}", class="section reveal", padding: clamp(4rem, 8vw, 8rem) 0
-7. Use CSS Grid or Flexbox for layouts — never tables
-8. Typography: headings use clamp() for fluid sizing
-9. Mobile first — must look great at 375px AND 1440px
-10. Add class="reveal" to each major element for scroll animation (JS adds .visible class)
-11. Write at least 8,000 characters of real, production-quality code for this section
-12. ALL content must be specific and real — no Lorem ipsum, no "[placeholder]"
+5. Section MUST have: id="${sectionType}", class="section"
+6. CSS Grid or Flexbox only — never tables or floats
+7. Mobile-first responsive — perfect at 375px AND 1440px — use @media (min-width: 768px) and (min-width: 1024px)
+8. Write at least 10,000 characters of real, production-quality HTML+CSS
+9. ALL content specific and real — no Lorem ipsum, no "[placeholder]" text — use actual business-relevant copy
+10. Every section needs: eyebrow label, main heading with ONE accented word, supporting text, and a clear CTA or action element
 
-## PREVIOUS SECTIONS HTML (for design continuity)
-${previousHtml ? previousHtml.substring(0, 2000) + '...[truncated]' : '(This is the first section)'}
+## PREVIOUS SECTIONS (maintain visual continuity — same font imports, CSS variables are already defined)
+${previousHtml ? previousHtml.substring(0, 1500) + '...[truncated]' : '(First section — establish the visual language)'}
 
-Output ONLY the section — starting with <style>/* ${sectionType} */`
+Output ONLY the section HTML, starting with <style>/* ${sectionType} */`
 
     const result = await this.generate('coder', systemPrompt, 16384)
     const raw = result.text.trim()
