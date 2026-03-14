@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
-import { Chrome } from 'lucide-react'
+import { Chrome, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SignInForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+  const registered = searchParams.get('registered') === '1'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -36,6 +37,12 @@ export default function SignInForm() {
         </div>
 
         <div className="bg-white rounded-2xl border shadow-sm p-8">
+          {registered && (
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg mb-5 text-sm text-green-700">
+              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+              Account created! You have 100 free credits. Sign in to start building.
+            </div>
+          )}
           <form onSubmit={handleCredentialsSignIn} className="space-y-4">
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
             <input type="email" placeholder="Email" className="w-full p-3 border rounded-xl" onChange={(e) => setEmail(e.target.value)} required />

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 
 const signupSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
 export async function POST(req: NextRequest) {
@@ -46,6 +46,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: 'User created' }, { status: 201 })
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+    }
     console.error('Sign-up error:', error)
     return NextResponse.json({ error: 'Sign-up failed' }, { status: 500 })
   }
