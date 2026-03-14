@@ -65,10 +65,10 @@ export async function POST(req: NextRequest) {
       send({ status: 'Planning website structure...', projectId: project.id })
       const plan = await withRetry(() => gemini.generatePlan(prompt))
 
-      send({ status: 'Writing website code...' })
+      send({ status: 'Writing website code...', detail: `Designing ${plan.industry || 'website'} with ${plan.style || 'modern'} style` })
       const { html: rawHtml, usage: coderUsage } = await withRetry(() => gemini.generateCode(plan, prompt))
       
-      send({ status: 'Reviewing and improving design...' })
+      send({ status: 'Reviewing and improving design...', detail: `${Math.round(rawHtml.length / 1024)}KB generated — polishing...` })
       const { html: finalHtml, usage: qaUsage } = await withRetry(() => gemini.reviewAndImprove(rawHtml, plan))
 
       await prisma.file.createMany({
@@ -77,7 +77,13 @@ export async function POST(req: NextRequest) {
 
       await prisma.project.update({
         where: { id: project.id },
-        data: { status: 'DRAFT', creditsUsed: CREDIT_COST, generationTime: Math.round((Date.now() - startTime) / 1000) }
+        data: {
+          status: 'DRAFT',
+          creditsUsed: CREDIT_COST,
+          generationTime: Math.round((Date.now() - startTime) / 1000),
+          // Store industry/style in name if available
+          name: plan.title ? `${plan.title}` : project.name,
+        }
       })
 
       await prisma.user.update({
