@@ -95,7 +95,7 @@ export const testimonialsCardScroller: ComponentVariant = {
   position: relative;
 }
 .testi-quote::before {
-  content: '\201C';
+  content: open-quote;
   font-family: Georgia, serif;
   font-size: 4rem;
   line-height: 0;
