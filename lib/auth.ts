@@ -7,6 +7,11 @@ import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
+
+  // CredentialsProvider requires JWT strategy — database sessions
+  // are incompatible with credentials-based auth in NextAuth.
+  session: { strategy: 'jwt' },
+
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || 'placeholder',
@@ -30,17 +35,27 @@ export const authOptions: NextAuthOptions = {
         const isValid = await bcrypt.compare(credentials.password, user.password)
         if (!isValid) return null
 
-        return { id: user.id, email: user.email, name: user.name }
+        return { id: user.id, email: user.email, name: user.name ?? undefined }
       },
     }),
   ],
+
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id
-        
+    // Embed user id into the JWT on sign-in
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
+      }
+      return token
+    },
+
+    // Pull fresh credits from DB on every session call
+    async session({ session, token }) {
+      if (session.user && token.id) {
+        session.user.id = token.id as string
+
         const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
+          where: { id: token.id as string },
           select: { credits: true },
         })
         session.user.credits = dbUser?.credits ?? 0
@@ -48,9 +63,9 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
+
   events: {
     async createUser({ user }) {
-      
       await prisma.user.update({
         where: { id: user.id },
         data: { credits: 100 },
@@ -65,6 +80,7 @@ export const authOptions: NextAuthOptions = {
       })
     },
   },
+
   pages: {
     signIn: '/auth/signin',
     newUser: '/dashboard',
