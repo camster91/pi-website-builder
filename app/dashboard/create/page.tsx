@@ -52,7 +52,7 @@ export default function CreatePage() {
   const [styleId, setStyleId] = useState<string>('')
   const [projectId, setProjectId] = useState<string>('')
   const [sections, setSections] = useState<SectionState[]>([])
-  const [styleFilter, setStyleFilter] = useState('All')
+  const [styleFilter, setStyleFilter] = useState('')
   const [showAllStyles, setShowAllStyles] = useState(false)
   
   // Loading and error states
@@ -288,11 +288,10 @@ export default function CreatePage() {
 
   // Get filtered styles
   const getFilteredStyles = () => {
-    if (styleFilter === 'All') {
-      return DESIGN_STYLES
-    }
+    if (!styleFilter) return DESIGN_STYLES
     return DESIGN_STYLES.filter((style) =>
-      style.tags.includes(styleFilter.toLowerCase())
+      style.industries.some(i => i.includes(styleFilter)) ||
+      style.tags.some(t => t.toLowerCase().includes(styleFilter))
     )
   }
 
@@ -596,10 +595,10 @@ export default function CreatePage() {
                   <div className="flex flex-wrap gap-2">
                     {INDUSTRY_FILTERS.map((filter) => (
                       <button
-                        key={filter}
-                        onClick={() => setStyleFilter(filter)}
+                        key={filter.value}
+                        onClick={() => setStyleFilter(filter.value)}
                         className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                          styleFilter === filter
+                          styleFilter === filter.value
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
