@@ -1,15 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { gemini } from '@/lib/gemini'
 import { getStyleById } from '@/lib/design-styles'
+import { getPaletteById } from '@/lib/color-palettes'
 import { z } from 'zod'
 
 const requestSchema = z.object({
   prompt: z.string().min(3).max(2000),
   styleId: z.string(),
-  plan: z.any(), // JSON plan object
+  plan: z.any(),
+  paletteId: z.string().optional(),
+  customColors: z.record(z.string()).optional(),
 })
 
 const SECTION_TYPES = [
@@ -53,21 +56,9 @@ export async function POST(req: NextRequest) {
         return
       }
 
-      const { prompt, styleId, plan } = validation.data
+      const { prompt, styleId, plan, paletteId, customColors } = validation.data
 
-      // 3. Check credits
-      const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { credits: true },
-      })
-
-      if (!user || user.credits < 50) {
-        await send({ type: 'error', message: 'Insufficient credits' })
-        await writer.close()
-        return
-      }
-
-      // 4. Create project
+      // 3. Create project (no credit check — unlimited)
       const project = await prisma.project.create({
         data: {
           name: plan.title || 'Untitled Project',
@@ -77,26 +68,14 @@ export async function POST(req: NextRequest) {
           plan,
           status: 'GENERATING',
           userId: session.user.id,
-          creditsUsed: 50,
+          creditsUsed: 0,
         },
       })
 
-      // 5. Deduct credits
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: { credits: { decrement: 50 } },
-      })
+      // Tell the client the project ID immediately so preview iframe can load
+      await send({ type: 'project_created', projectId: project.id })
 
-      await prisma.tokenTransaction.create({
-        data: {
-          userId: session.user.id,
-          amount: -50,
-          type: 'WEBSITE_GENERATION',
-          metadata: { projectId: project.id },
-        },
-      })
-
-      // 6. Get style tokens
+      // 4. Get style tokens + apply color override
       const style = getStyleById(styleId)
       if (!style) {
         await send({ type: 'error', message: 'Invalid style ID' })
@@ -104,7 +83,15 @@ export async function POST(req: NextRequest) {
         return
       }
 
-      const styleTokens = style.tokens
+      // Merge color overrides: customColors (logo) > paletteId > style defaults
+      let styleTokens = { ...style.tokens }
+      const colorOverride = customColors ?? (paletteId ? getPaletteById(paletteId)?.colors : null)
+      if (colorOverride) {
+        styleTokens = {
+          ...styleTokens,
+          colors: { ...styleTokens.colors, ...colorOverride },
+        }
+      }
 
       // 7. Determine sections to generate
       const sectionsToGenerate = SECTION_TYPES.filter(section => {
@@ -116,6 +103,7 @@ export async function POST(req: NextRequest) {
       })
 
       // 8. Generate each section
+      const mergedStyle = { ...style, tokens: styleTokens }
       let previousHtml = ''
       const completedSections: Array<{ type: string; html: string; order: number }> = []
 
@@ -125,11 +113,9 @@ export async function POST(req: NextRequest) {
         try {
           // Send section_start event
           await send({ type: 'section_start', section: section.type })
-
-          // Generate section HTML
           const html = await gemini.generateSection(
             plan,
-            styleTokens,
+            mergedStyle,
             section.type,
             previousHtml
           )
@@ -216,7 +202,7 @@ export async function POST(req: NextRequest) {
       // 9. Assemble full HTML document
       if (completedSections.length > 0) {
         try {
-          const fullHtml = await gemini.assembleWebsite(completedSections, plan, style)
+          const fullHtml = gemini.assembleWebsite(completedSections, plan, mergedStyle)
 
           // 10. Save File record (File model has unique constraint on projectId + path)
           await prisma.file.upsert({

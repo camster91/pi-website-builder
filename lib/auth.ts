@@ -26,6 +26,13 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
+        // Allowlist check — set ALLOWED_EMAILS as comma-separated env var
+        const allowedRaw = process.env.ALLOWED_EMAILS
+        if (allowedRaw) {
+          const allowed = allowedRaw.split(',').map(e => e.trim().toLowerCase())
+          if (!allowed.includes(credentials.email.toLowerCase())) return null
+        }
+
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         })

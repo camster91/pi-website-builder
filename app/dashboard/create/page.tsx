@@ -14,6 +14,8 @@ import {
   Eye 
 } from 'lucide-react'
 import { DESIGN_STYLES, INDUSTRY_FILTERS, getSuggestedStyles } from '@/lib/design-styles'
+import { COLOR_PALETTES, PALETTE_CATEGORIES, type ColorPalette } from '@/lib/color-palettes'
+import { Upload, Palette, X } from 'lucide-react'
 
 type Step = 'describe' | 'style' | 'building'
 
@@ -54,6 +56,16 @@ export default function CreatePage() {
   const [sections, setSections] = useState<SectionState[]>([])
   const [styleFilter, setStyleFilter] = useState('')
   const [showAllStyles, setShowAllStyles] = useState(false)
+
+  // Color customization
+  const [showColorPanel, setShowColorPanel] = useState(false)
+  const [paletteId, setPaletteId] = useState<string>('')
+  const [paletteCategory, setPaletteCategory] = useState('All')
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string>('')
+  const [extractedColors, setExtractedColors] = useState<Record<string,string> | null>(null)
+  const [isExtractingColors, setIsExtractingColors] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
   
   // Loading and error states
   const [isLoadingPlan, setIsLoadingPlan] = useState(false)
@@ -61,7 +73,6 @@ export default function CreatePage() {
   const [error, setError] = useState<string | null>(null)
   
   // Refs
-  const eventSourceRef = useRef<EventSource | null>(null)
   const previewFrameRef = useRef<HTMLIFrameElement>(null)
   const previewRefreshInterval = useRef<NodeJS.Timeout | null>(null)
 
@@ -75,12 +86,7 @@ export default function CreatePage() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close()
-      }
-      if (previewRefreshInterval.current) {
-        clearInterval(previewRefreshInterval.current)
-      }
+      if (previewRefreshInterval.current) clearInterval(previewRefreshInterval.current)
     }
   }, [])
 
@@ -140,91 +146,91 @@ export default function CreatePage() {
         setSections(initialSections)
       }
 
-      // Start generation
+      // Initialize sections list immediately from plan so UI shows pending state
+      const sectionTypes = [
+        { type: 'hero', title: 'Hero' },
+        { type: 'social-proof', title: 'Social Proof' },
+        { type: 'features', title: 'Features' },
+        { type: 'about', title: 'About' },
+        { type: 'testimonials', title: 'Testimonials' },
+        ...(plan?.hasPricing ? [{ type: 'pricing', title: 'Pricing' }] : []),
+        { type: 'cta', title: 'CTA Banner' },
+        { type: 'contact', title: 'Contact' },
+        { type: 'footer', title: 'Footer' },
+      ]
+      setSections(sectionTypes.map((s, i) => ({ ...s, status: 'pending' as const, order: i })))
+      setStep('building')
+      startPreviewRefresh()
+
+      // POST and consume the SSE stream directly from the response body
       const response = await fetch('/api/generate/sections', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt,
           styleId,
-          sections: plan?.sections || [],
+          plan,
+          paletteId: paletteId || undefined,
+          customColors: extractedColors || undefined,
         }),
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to start generation')
+        const text = await response.text()
+        let msg = 'Failed to start generation'
+        try { msg = JSON.parse(text).error ?? msg } catch {}
+        throw new Error(msg)
       }
 
-      const data = await response.json()
-      setProjectId(data.projectId)
-      setStep('building')
+      if (!response.body) throw new Error('No response stream')
 
-      // Connect to SSE
-      connectToSSE(data.projectId)
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
 
-      // Start iframe refresh interval
-      startPreviewRefresh()
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const msg = JSON.parse(line.slice(6))
+            handleSSEMessage(msg)
+          } catch {}
+        }
+      }
+
+      setIsGenerating(false)
+      if (previewRefreshInterval.current) clearInterval(previewRefreshInterval.current)
+      if (previewFrameRef.current) {
+        // Force final reload
+        const src = previewFrameRef.current.src
+        previewFrameRef.current.src = ''
+        setTimeout(() => { if (previewFrameRef.current) previewFrameRef.current.src = src }, 100)
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start generation')
+      setError(err instanceof Error ? err.message : 'Failed to generate website')
       setIsGenerating(false)
     }
   }
 
-  // SSE connection
-  const connectToSSE = (projId: string) => {
-    const eventSource = new EventSource(`/api/generate/sections?projectId=${projId}`)
-    eventSourceRef.current = eventSource
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data)
-
-        if (data.type === 'section_start') {
-          setSections((prev) =>
-            prev.map((s) =>
-              s.type === data.section
-                ? { ...s, status: 'generating' }
-                : s
-            )
-          )
-        } else if (data.type === 'section_done') {
-          setSections((prev) =>
-            prev.map((s) =>
-              s.type === data.section
-                ? { ...s, status: 'complete' }
-                : s
-            )
-          )
-        } else if (data.type === 'section_error') {
-          setSections((prev) =>
-            prev.map((s) =>
-              s.type === data.section
-                ? { ...s, status: 'failed' }
-                : s
-            )
-          )
-        } else if (data.type === 'complete') {
-          setIsGenerating(false)
-          if (previewRefreshInterval.current) {
-            clearInterval(previewRefreshInterval.current)
-          }
-          // Final refresh
-          if (previewFrameRef.current) {
-            previewFrameRef.current.src = previewFrameRef.current.src
-          }
-        }
-      } catch (err) {
-        console.error('Error parsing SSE message:', err)
-      }
-    }
-
-    eventSource.onerror = (err) => {
-      console.error('SSE error:', err)
-      eventSource.close()
-      setError('Lost connection to server. Please refresh the page.')
+  const handleSSEMessage = (data: any) => {
+    if (data.type === 'project_created') {
+      setProjectId(data.projectId)
+    } else if (data.type === 'section_start') {
+      setSections(prev => prev.map(s => s.type === data.section ? { ...s, status: 'generating' } : s))
+    } else if (data.type === 'section_done') {
+      setSections(prev => prev.map(s => s.type === data.section ? { ...s, status: 'complete' } : s))
+    } else if (data.type === 'section_error') {
+      setSections(prev => prev.map(s => s.type === data.section ? { ...s, status: 'failed' } : s))
+    } else if (data.type === 'complete') {
+      setProjectId(data.projectId)
+      setSections(prev => prev.map(s => s.status === 'generating' ? { ...s, status: 'complete' } : s))
+    } else if (data.type === 'error') {
+      setError(data.message)
     }
   }
 
@@ -330,6 +336,36 @@ export default function CreatePage() {
       </div>
     )
   }
+
+  // Handle logo upload + color extraction
+  const handleLogoUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) return
+    setLogoFile(file)
+    setLogoPreview(URL.createObjectURL(file))
+    setIsExtractingColors(true)
+    setExtractedColors(null)
+    setPaletteId('')
+    try {
+      const fd = new FormData()
+      fd.append('logo', file)
+      const res = await fetch('/api/extract-colors', { method: 'POST', body: fd })
+      if (!res.ok) throw new Error('Extraction failed')
+      const data = await res.json()
+      setExtractedColors(data.palette)
+    } catch {
+      setError('Could not extract colors from logo. Try a different image.')
+    } finally {
+      setIsExtractingColors(false)
+    }
+  }
+
+  const getFilteredPalettes = () => {
+    if (!paletteCategory || paletteCategory === 'All') return COLOR_PALETTES
+    return COLOR_PALETTES.filter(p => p.category === paletteCategory.toLowerCase())
+  }
+
+  // Get the active color override (logo-extracted or palette)
+  const activeColorOverride = extractedColors ?? (paletteId ? COLOR_PALETTES.find(p => p.id === paletteId)?.colors : null)
 
   // Render color swatches
   const renderColorSwatches = (style: typeof DESIGN_STYLES[0]) => {
@@ -616,6 +652,160 @@ export default function CreatePage() {
                 </div>
               </div>
             )}
+
+            {/* ── Color Customization Panel ── */}
+            <div className="mb-6 border border-gray-200 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setShowColorPanel(!showColorPanel)}
+                className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-400 via-purple-400 to-blue-400 flex items-center justify-center">
+                    <Palette className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-900">Customize Colors</span>
+                    {activeColorOverride && (
+                      <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                        {extractedColors ? '🎨 Logo colors applied' : `✓ ${COLOR_PALETTES.find(p=>p.id===paletteId)?.name}`}
+                      </span>
+                    )}
+                    {!activeColorOverride && (
+                      <span className="ml-2 text-xs text-gray-500">Optional — upload logo or pick palette</span>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${showColorPanel ? 'rotate-90' : ''}`} />
+              </button>
+
+              {showColorPanel && (
+                <div className="border-t border-gray-200 bg-gray-50 p-5 space-y-6">
+
+                  {/* Logo Upload */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <Upload className="w-4 h-4" /> Extract colors from your logo
+                    </h3>
+                    <div
+                      className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all relative"
+                      onClick={() => logoInputRef.current?.click()}
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f) handleLogoUpload(f) }}
+                    >
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if(f) handleLogoUpload(f) }}
+                      />
+                      {logoPreview ? (
+                        <div className="flex items-center gap-4">
+                          <img src={logoPreview} alt="Logo" className="h-14 object-contain rounded-lg bg-white p-1 border border-gray-200" />
+                          <div className="flex-1 text-left">
+                            <p className="font-medium text-gray-800 text-sm">{logoFile?.name}</p>
+                            {isExtractingColors && (
+                              <p className="text-xs text-purple-600 flex items-center gap-1 mt-1">
+                                <Loader2 className="w-3 h-3 animate-spin" /> Extracting colors...
+                              </p>
+                            )}
+                            {extractedColors && !isExtractingColors && (
+                              <div className="flex gap-1.5 mt-2">
+                                {Object.entries(extractedColors).slice(0,6).map(([k,v]) => (
+                                  <div key={k} className="w-6 h-6 rounded-full border-2 border-white shadow-sm" style={{backgroundColor: v as string}} title={`${k}: ${v}`} />
+                                ))}
+                                <span className="text-xs text-green-600 font-medium ml-1 self-center">Applied!</span>
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={e => { e.stopPropagation(); setLogoFile(null); setLogoPreview(''); setExtractedColors(null) }}
+                            className="text-gray-400 hover:text-red-500 p-1"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm font-medium text-gray-700">Drop your logo here or click to upload</p>
+                          <p className="text-xs text-gray-500 mt-1">PNG, JPG, SVG, WebP — up to 5MB</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-gray-300" />
+                    <span className="text-xs text-gray-500 font-medium">OR CHOOSE A PALETTE</span>
+                    <div className="flex-1 h-px bg-gray-300" />
+                  </div>
+
+                  {/* Palette Category Filters */}
+                  <div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {PALETTE_CATEGORIES.map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => setPaletteCategory(cat)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                            paletteCategory === cat
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-white text-gray-600 border border-gray-200 hover:border-purple-400'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Palette Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-72 overflow-y-auto pr-1">
+                      {getFilteredPalettes().map(palette => (
+                        <button
+                          key={palette.id}
+                          onClick={() => { setPaletteId(palette.id === paletteId ? '' : palette.id); setExtractedColors(null); setLogoFile(null); setLogoPreview('') }}
+                          className={`p-3 rounded-xl border-2 text-left transition-all hover:shadow-md ${
+                            paletteId === palette.id
+                              ? 'border-purple-600 ring-2 ring-purple-200 bg-white'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          {/* Color dots */}
+                          <div className="flex gap-1 mb-2">
+                            {[palette.colors.primary, palette.colors.accent, palette.colors.bg, palette.colors.text].map((c,i) => (
+                              <div key={i} className="w-5 h-5 rounded-full border border-white shadow-sm flex-shrink-0" style={{backgroundColor: c}} />
+                            ))}
+                          </div>
+                          <p className="text-xs font-semibold text-gray-800 leading-tight">{palette.emoji} {palette.name}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {activeColorOverride && (
+                    <div className="flex items-center justify-between bg-white rounded-lg border border-purple-200 px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex gap-1">
+                          {Object.values(activeColorOverride).slice(0,5).map((c,i) => (
+                            <div key={i} className="w-5 h-5 rounded-full border-2 border-white shadow" style={{backgroundColor: c as string}} />
+                          ))}
+                        </div>
+                        <span className="text-sm font-medium text-purple-800">
+                          {extractedColors ? 'Logo palette active' : `${COLOR_PALETTES.find(p=>p.id===paletteId)?.name} palette active`}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => { setPaletteId(''); setExtractedColors(null); setLogoFile(null); setLogoPreview('') }}
+                        className="text-xs text-gray-500 hover:text-red-600 font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
