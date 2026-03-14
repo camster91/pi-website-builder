@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import sharp from 'sharp';
 import { authOptions } from '@/lib/auth';
