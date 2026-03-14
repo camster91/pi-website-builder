@@ -394,50 +394,74 @@ OUTPUT: The complete HTML document starting with <!DOCTYPE html>. Nothing else.`
   }
 
   async reviewAndImprove(html: string, plan: any): Promise<{ html: string; usage?: any }> {
-    // If the coder produced a large, high-quality output, only do targeted fixes
-    if (html.length > 30000) {
-      const prompt = `You are a senior frontend developer doing a final QA pass. Make TARGETED fixes only — do not rewrite sections that already look good.
+    // If the coder produced a large, high-quality output, do a targeted surgical QA pass
+    if (html.length > 25000) {
+      const prompt = `You are a senior frontend engineer doing a FINAL QA pass on a completed website.
+Your job is TARGETED FIXES only — do NOT redesign anything that already works.
 
-CHECK AND FIX ONLY:
-1. Broken or missing nav links (href="#section-id" must match the section's id attribute)
-2. Missing .reveal class on any section that doesn't animate in
-3. Any section that shows only empty/placeholder content with no real text
-4. Mobile menu toggle — ensure the button works
-5. Contact form — ensure the submit button preventDefault works
-6. Any CSS syntax errors or unclosed tags
+FIXES TO APPLY (in order of importance):
 
-Do NOT change the overall design, layout, or working content. Return ONLY the complete fixed HTML.
+1. ANCHOR LINKS: Verify every href="#sectionId" matches an actual id="" in the HTML.
+   - Nav links must point to real section IDs
+   - CTA buttons "href=#contact" must match <section id="contact">
 
-Code to fix:
-${html.substring(0, 60000)}`
+2. CSS VARIABLE CONSISTENCY: The global :root defines CSS custom properties.
+   - Any section using hardcoded hex colors that don't match the design tokens → replace with var(--clr-primary) etc.
+   - Do NOT change colors that are intentionally different (e.g., footer dark background)
+
+3. MISSING ANIMATIONS: Any section lacking a .reveal class → add reveal class + delay
+   - Check: hero (should reveal), features (reveal-stagger), about (reveal-left + reveal-right), testimonials (reveal)
+   
+4. FONT GOOGLE LINK: Ensure the <link> for Google Fonts covers ALL font weights used in the CSS.
+
+5. ACCESSIBILITY:
+   - Images without alt="" → add descriptive alt text based on context
+   - Form inputs without associated labels → add for/id pairs
+   - Nav <ul> without aria-label → add aria-label="Main navigation"
+
+6. RESPONSIVE BREAKPOINTS: Scan for any CSS grid/flex that breaks at 375px.
+   - grid-template-columns with fixed px values → ensure min(100%, Xpx) or auto-fit/minmax
+
+7. Z-INDEX STACKING: Nav should be z-index 100, mobile menu 99, floating badges 2, content 1
+
+8. JAVASCRIPT COMPLETENESS:
+   - Mobile menu: toggle must set aria-expanded and close on link click
+   - Scroll progress bar: must be present and functional
+   - Counter animations: all .counter elements should have data-target attributes
+
+Return the COMPLETE fixed HTML document. Do NOT truncate. Do NOT add comments like "// rest unchanged".
+
+HTML to review:
+${html.substring(0, 80000)}`
 
       const result = await this.generate('qa', prompt, 32768)
       const improved = result.text.trim()
       const cleanHtml = improved.startsWith('<!') ? improved : extractCode(improved)
-      return { html: cleanHtml.length > html.length * 0.5 ? cleanHtml : html, usage: result.usage }
+      // Only use the improved version if it's substantial (didn't get truncated)
+      return { html: cleanHtml.length > html.length * 0.6 ? cleanHtml : html, usage: result.usage }
     }
 
-    // Small output — full rewrite pass
-    const prompt = `You are a senior frontend developer and UX expert. This website code is too short and low quality. Expand and improve it significantly.
+    // Small output (< 25KB) — needs significant expansion
+    const prompt = `You are a senior frontend developer and UX expert. This website output is too small and needs expansion.
 
 MANDATORY IMPROVEMENTS:
-1. Every section must have real, specific content — NO Lorem ipsum, NO placeholders
-2. Add scroll reveal animations to every section (.reveal + IntersectionObserver)
-3. Improve the hero — it needs a compelling gradient background and animations
-4. Expand the services section to 6 items in a proper 3-column CSS Grid
-5. Add a testimonials section if missing
-6. Add a stats/social proof section if missing
-7. Ensure the navbar is properly sticky with glassmorphism on scroll
-8. Fix mobile responsiveness — test at 375px width mentally
-9. Make all hover effects smooth and satisfying
+1. Every section must have real, specific ${plan?.industry || 'business'} content — NO Lorem ipsum
+2. Add .reveal/.reveal-stagger animations on EVERY section
+3. Expand the hero with gradient orbs and trust indicators
+4. Ensure 6 service/feature cards in a 3-col CSS Grid
+5. Add testimonials section with star ratings if missing
+6. Add stats/social proof strip if missing
+7. Navbar must be sticky with glassmorphism on scroll (.scrolled class)
+8. Contact form must have preventDefault and success feedback
+9. Footer must be dark with multiple link columns
 
-Target at least 40,000 characters in the output.
+Target: minimum 40,000 characters of HTML+CSS. Make it comprehensive.
 
-Return ONLY the improved HTML document.
+Business: ${plan?.title || 'Business'} | Industry: ${plan?.industry || 'general'}
 
-Original plan: ${JSON.stringify(plan.seo || {})}
+Return ONLY the complete HTML document.
 
-Code to improve:
+Code to expand:
 ${html}`
 
     const result = await this.generate('qa', prompt, 32768)

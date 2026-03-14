@@ -124,6 +124,18 @@ export function fillTemplate(
     }
   }
 
+  // Handle indexed array access: {{arrayName[index].property}} and {{arrayName[index]}}
+  const indexedRegex = /\{\{(\w+)\[(\d+)\](?:\.(\w+))?\}\}/g
+  html = html.replace(indexedRegex, (match, arrayName, idxStr, prop) => {
+    const arr = content[arrayName]
+    if (!Array.isArray(arr)) return ''
+    const item = arr[parseInt(idxStr)]
+    if (item === undefined || item === null) return ''
+    if (!prop) return escapeHtml(String(item))
+    if (typeof item === 'object') return escapeHtml(String((item as any)[prop] ?? ''))
+    return ''
+  })
+
   // Handle array slots: {{#items}}...{{/items}}
   const arrayRegex = /\{\{#(\w+)\}\}([\s\S]*?)\{\{\/\1\}\}/g
   html = html.replace(arrayRegex, (match, arrayName, itemTemplate) => {

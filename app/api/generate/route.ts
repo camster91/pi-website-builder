@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { gemini } from '@/lib/gemini'
+import { gemini, type AgentType } from '@/lib/gemini'
 import { ratelimit } from '@/lib/ratelimit'
 import { projectReadyEmail } from '@/lib/email'
 import { getImagesForIndustry } from '@/lib/image-bank'
@@ -157,10 +157,10 @@ export async function POST(req: NextRequest) {
         fontBody: fontPair.body,
         radius: style.tokens.shape.borderRadius,
         // Use AI image if available, otherwise Unsplash
-        heroImage: aiImages
+        heroImage: aiImages?.get('hero')
           ? getImageUrl(aiImages.get('hero')!)
           : fallbackImages.hero[0],
-        aboutImage: aiImages
+        aboutImage: aiImages?.get('about')
           ? getImageUrl(aiImages.get('about')!)
           : fallbackImages.about[0],
         serviceImages: fallbackImages.services,
@@ -214,7 +214,7 @@ export async function POST(req: NextRequest) {
               // Ask AI to fill content slots (small, fast prompt)
               const fillPrompt = buildContentFillPrompt(variant, plan, sectionType)
               const fillResult = await withRetry(() =>
-                gemini.generate('planner' as any, fillPrompt, 2048)
+                gemini.generate('planner' as AgentType, fillPrompt, 2048)
               )
               const filledContent = parseContentFill(fillResult.text)
 

@@ -1,26 +1,47 @@
 /**
  * Component Registry — all available component variants.
- * Import and register every component here.
+ * Each section type maps to an array of available variants.
+ * The hybrid pipeline uses hasComponents() to decide whether to use
+ * a pre-built template (fast, guaranteed quality) or AI generation.
  */
 
 import type { ComponentVariant } from './types'
+
+// Hero
 import { heroSplitImage } from './hero/split-image'
 import { heroCenteredGradient } from './hero/centered-gradient'
 
+// Social Proof
+import { socialProofStatsStrip } from './social-proof/stats-strip'
+
+// Features
+import { featuresIconGrid } from './features/icon-grid'
+
+// About
+import { aboutSplitPhoto } from './about/split-photo'
+
+// Testimonials
+import { testimonialsCardScroller } from './testimonials/card-scroller'
+
+// CTA
+import { ctaGradientBanner } from './cta/gradient-banner'
+
+// Contact
+import { contactSplitForm } from './contact/split-form'
+
+// Footer
+import { footerFourColumn } from './footer/four-column'
+
 /** All registered component variants, keyed by section type */
 export const COMPONENT_REGISTRY: Record<string, ComponentVariant[]> = {
-  hero: [
-    heroSplitImage,
-    heroCenteredGradient,
-  ],
-  // More sections will be added as components are built:
-  // 'social-proof': [],
-  // features: [],
-  // about: [],
-  // testimonials: [],
-  // cta: [],
-  // contact: [],
-  // footer: [],
+  hero: [heroSplitImage, heroCenteredGradient],
+  'social-proof': [socialProofStatsStrip],
+  features: [featuresIconGrid],
+  about: [aboutSplitPhoto],
+  testimonials: [testimonialsCardScroller],
+  cta: [ctaGradientBanner],
+  contact: [contactSplitForm],
+  footer: [footerFourColumn],
 }
 
 /**
@@ -59,16 +80,17 @@ export function selectBestVariant(
       'minimal-centered': 'hero-centered-gradient',
       'dark-gradient': 'hero-centered-gradient',
       'editorial': 'hero-centered-gradient',
+      'full-bleed': 'hero-split-image',
     }
     const targetId = styleMap[heroStyle]
     if (targetId) {
-      const match = variants.find(v => v.id === targetId)
+      const match = variants.find((v) => v.id === targetId)
       if (match) return match
     }
   }
 
-  // Score variants
-  const scored = variants.map(v => {
+  // Score each variant by industry match and tag overlap
+  const scored = variants.map((v) => {
     let score = 0
     if (v.bestFor.includes(industry)) score += 10
     for (const tag of tags) {
@@ -79,4 +101,11 @@ export function selectBestVariant(
 
   scored.sort((a, b) => b.score - a.score)
   return scored[0]?.variant || variants[0]
+}
+
+/** Returns a summary of coverage for logging/debugging */
+export function getCoverage(): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(COMPONENT_REGISTRY).map(([k, v]) => [k, v.length])
+  )
 }
