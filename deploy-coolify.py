@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
 import requests
 import json
 import sys
 import time
 
-# Coolify API Configuration
 API_BASE = "http://187.77.26.99:8000/api/v1"
 AUTH_TOKEN = "2|OyUt8feqoaBUVu1Uvvkq59CCqNjIdj4j2Vf0OXYf"
 PROJECT_UUID = "hc4ocwo0sc4o8kkkwcogssgk"
@@ -23,31 +21,33 @@ def get_existing_app():
     response = requests.get(url, headers=headers)
     
     if response.status_code != 200:
-        print(f"❌ Failed to fetch applications: {response.text}")
+        print(f"Failed to fetch applications: {response.text}")
         return None
     
     data = response.json()
-    for app in data.get('data', []):
+    apps = data if isinstance(data, list) else data.get('data', [])
+    
+    for app in apps:
         if app.get('name') == APP_NAME:
             return app.get('uuid')
     return None
 
 def trigger_deploy(app_uuid):
     """Trigger deployment of existing application"""
-    print(f"🔄 Triggering redeploy for {app_uuid}...")
+    print(f"Triggering redeploy for {app_uuid}...")
     url = f"{API_BASE}/applications/{app_uuid}/start"
     response = requests.post(url, headers=headers)
     
     if response.status_code == 200:
-        print("✅ Deploy triggered successfully")
+        print("Deploy triggered successfully")
         return True
     else:
-        print(f"❌ Failed to trigger deploy: {response.text}")
+        print(f"Failed to trigger deploy: {response.text}")
         return False
 
 def create_application():
     """Create new application in Coolify"""
-    print("🆕 Creating new application...")
+    print("Creating new application...")
     
     # Try docker-compose first
     payload = {
@@ -69,10 +69,10 @@ def create_application():
     if response.status_code == 200:
         app_uuid = response.json().get('data', {}).get('uuid')
         if app_uuid:
-            print(f"✅ Application created with UUID: {app_uuid}")
+            print(f"Application created with UUID: {app_uuid}")
             return app_uuid
     
-    print("⚠️  Docker-compose failed, trying dockerfile...")
+    print("Docker-compose failed, trying dockerfile...")
     
     # Fallback to dockerfile
     payload = {
@@ -91,10 +91,10 @@ def create_application():
     if response.status_code == 200:
         app_uuid = response.json().get('data', {}).get('uuid')
         if app_uuid:
-            print(f"✅ Application created with UUID: {app_uuid}")
+            print(f"Application created with UUID: {app_uuid}")
             return app_uuid
     
-    print(f"❌ Failed to create application: {response.text}")
+    print(f"Failed to create application: {response.text}")
     return None
 
 def get_application_url(app_uuid):
@@ -109,30 +109,27 @@ def get_application_url(app_uuid):
     return None
 
 def main():
-    print("🚀 Deploying Pi Website Builder to Coolify...")
+    print("Deploying Pi Website Builder to Coolify...")
     print(f"Repository: {GIT_REPO}")
     
-    # Check for existing app
     existing_app = get_existing_app()
     
     if existing_app:
-        print(f"⚠️  Application already exists with UUID: {existing_app}")
+        print(f"Application already exists with UUID: {existing_app}")
         if trigger_deploy(existing_app):
             time.sleep(3)
             app_url = get_application_url(existing_app)
             if app_url:
-                print(f"🌐 Application URL: {app_url}")
+                print(f"Application URL: {app_url}")
             else:
-                print("ℹ️  Application URL will be available after build completes")
+                print("Application URL will be available after build completes")
         return
     
-    # Create new application
     app_uuid = create_application()
     if not app_uuid:
         sys.exit(1)
     
-    # Set environment variables note
-    print("\n📝 Setting environment variables...")
+    print("\nSetting environment variables...")
     print("Note: You need to set actual values in Coolify dashboard for:")
     print("- DATABASE_URL")
     print("- NEXTAUTH_SECRET")
@@ -143,17 +140,16 @@ def main():
     print("- STRIPE_WEBHOOK_SECRET")
     print("- BASE_DOMAIN")
     
-    # Trigger first deploy
     if trigger_deploy(app_uuid):
         time.sleep(5)
         app_url = get_application_url(app_uuid)
         if app_url:
-            print(f"🌐 Application URL: {app_url}")
+            print(f"Application URL: {app_url}")
         else:
-            print("ℹ️  Application URL will be available after build completes")
+            print("Application URL will be available after build completes")
     
-    print("\n🎉 Deployment initiated!")
-    print("📋 Next steps:")
+    print("\nDeployment initiated!")
+    print("Next steps:")
     print("1. Set environment variables in Coolify dashboard")
     print("2. Monitor build logs in Coolify")
     print("3. Access your Pi Website Builder at the URL above")

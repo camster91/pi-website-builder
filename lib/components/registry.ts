@@ -123,7 +123,6 @@ import { comparisonVisualResults } from './comparison/visual-results'
 import { comparisonValueProp } from './comparison/value-prop'
 import { comparisonCardsCompare } from './comparison/cards-compare'
 
-import { portfolioProjectGrid } from './portfolio/project-grid'
 import { portfolioMasonry } from './portfolio/masonry-grid'
 import { portfolioFullSlider } from './portfolio/full-slider'
 import { portfolioCaseStudy } from './portfolio/case-study'

@@ -69,6 +69,9 @@ class GeminiService {
     return extractJSON(result.text);
   }
 
+  async generatePlan(prompt: string): Promise<any> {
+    const systemPrompt = `You are a senior brand strategist and UX architect. Analyze the user's website request and return a comprehensive JSON plan.
+
 INDUSTRY DETECTION: Detect which category this falls into:
 local-service | restaurant | portfolio | saas | ecommerce | agency | nonprofit | healthcare | real-estate | education | fitness | beauty
 
