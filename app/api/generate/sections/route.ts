@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       const validation = requestSchema.safeParse(body)
 
       if (!validation.success) {
-        await send({ type: 'error', message: validation.error.errors[0].message })
+        await send({ type: 'error', message: validation.error.issues[0]?.message ?? "Invalid input" })
         await writer.close()
         return
       }
